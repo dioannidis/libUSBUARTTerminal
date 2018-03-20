@@ -46,7 +46,7 @@ type
     USBHandle: plibusb_device_handle;
   end;
 
-function usbasp_uart_open(var USBasp: USBaspUART): integer;
+function usbasp_uart_open(var AUSBasp: USBaspUART): integer;
 
 implementation
 
@@ -54,17 +54,28 @@ type
   pplibusb_device = ^plibusb_device;
   ppplibusb_device = ^pplibusb_device;
 
-function usbasp_uart_open(var USBasp: USBaspUART): integer;
+function usbasp_uart_open(var AUSBasp: USBaspUART): integer;
+
+  function CompareDescriptor(AUSBHandle:plibusb_device_handle; ADescriptor: uint8_t; AStringValue: string): boolean;
+  var
+    iStrLength: integer;
+    StrBuffer: array [0..255] of byte;
+    StrTemp: string;
+  begin
+    iStrLength := libusb_get_string_descriptor_ascii(AUSBHandle, ADescriptor, @StrBuffer[0], Length(StrBuffer));
+    SetString(StrTemp, PChar(@StrBuffer[0]), iStrLength);
+    Result := StrTemp <> AStringValue;
+  end;
+
 var
   USBContext: plibusb_context;
   USBDevice: plibusb_device;
   USBDeviceDescriptor: libusb_device_descriptor;
   USBDeviceList: ppplibusb_device;
   iResult, i, USBDeviceListCount: integer;
-  StrBuffer: array [0..255] of byte;
-  StrTemp: string;
 begin
   Result := USB_ERROR_NOTFOUND;
+  AUSBasp.USBHandle := nil;
   iResult := libusb_init(USBContext);
   libusb_set_debug(USBContext, 3);
   USBDeviceListCount := libusb_get_device_list(USBContext, plibusb_device(USBDeviceList));
@@ -75,30 +86,24 @@ begin
       libusb_get_device_descriptor(USBDevice, USBDeviceDescriptor);
       if (USBDeviceDescriptor.idVendor = USBASP_SHARED_VID) and (USBDeviceDescriptor.idProduct = USBASP_SHARED_PID) then
       begin
-        if libusb_Open(USBDevice, USBasp.USBHandle) = 0 then
+        if libusb_Open(USBDevice, AUSBasp.USBHandle) = 0 then
         begin
-          iResult := libusb_get_string_descriptor_ascii(USBasp.USBHandle, USBDeviceDescriptor.iProduct, @StrBuffer[0], Length(StrBuffer));
-          SetString(StrTemp, PChar(@StrBuffer[0]), iResult);
-          if StrTemp <> 'USBasp' then
+          if CompareDescriptor(AUSBasp.USBHandle, USBDeviceDescriptor.iProduct, 'USBasp') then
           begin
-            USBasp.USBHandle := nil;
-            libusb_close(USBasp.USBHandle);
+            AUSBasp.USBHandle := nil;
+            libusb_close(AUSBasp.USBHandle);
             continue;
           end;
-          iResult := libusb_get_string_descriptor_ascii(USBasp.USBHandle, USBDeviceDescriptor.iManufacturer, @StrBuffer[0], Length(StrBuffer));
-          SetString(StrTemp, PChar(@StrBuffer[0]), iResult);
-          if StrTemp <> 'www.fischl.de' then
+          if CompareDescriptor(AUSBasp.USBHandle, USBDeviceDescriptor.iManufacturer, 'www.fischl.de') then
           begin
-            USBasp.USBHandle := nil;
-            libusb_close(USBasp.USBHandle);
+            AUSBasp.USBHandle := nil;
+            libusb_close(AUSBasp.USBHandle);
             continue;
           end;
-          iResult := libusb_get_string_descriptor_ascii(USBasp.USBHandle, USBDeviceDescriptor.iSerialNumber, @StrBuffer[0], Length(StrBuffer));
-          SetString(StrTemp, PChar(@StrBuffer[0]), iResult);
-          if StrTemp <> 'v1.5.1' then
+          if CompareDescriptor(AUSBasp.USBHandle, USBDeviceDescriptor.iSerialNumber, 'v1.5.1') then
           begin
-            USBasp.USBHandle := nil;
-            libusb_close(USBasp.USBHandle);
+            AUSBasp.USBHandle := nil;
+            libusb_close(AUSBasp.USBHandle);
             continue;
           end;
           break;
@@ -109,7 +114,7 @@ begin
     libusb_free_device_list(plibusb_device(USBDeviceList), 1);
     libusb_exit(USBContext);
   end;
-  if USBasp.USBHandle <> nil then
+  if AUSBasp.USBHandle <> nil then
     Result := 0;
 end;
 
