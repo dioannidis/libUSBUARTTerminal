@@ -46,7 +46,7 @@ type
     USBHandle: plibusb_device_handle;
   end;
 
-function usbasp_uart_open(var usbasp: USBaspUART): integer;
+function usbasp_uart_open(var USBasp: USBaspUART): integer;
 
 implementation
 
