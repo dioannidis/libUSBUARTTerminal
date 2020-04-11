@@ -1,0 +1,138 @@
+object frmMain: TfrmMain
+  Left = 388
+  Height = 320
+  Top = 250
+  Width = 690
+  Caption = 'Form2'
+  ClientHeight = 320
+  ClientWidth = 690
+  KeyPreview = True
+  Menu = MainMenu1
+  OnCreate = FormCreate
+  OnKeyPress = FormKeyPress
+  object btnConnect: TButton
+    Left = 520
+    Height = 49
+    Top = 8
+    Width = 75
+    Anchors = [akTop, akRight]
+    Caption = 'Connect'
+    OnClick = btnConnectClick
+    TabOrder = 0
+  end
+  object Memo1: TMemo
+    Left = 8
+    Height = 208
+    Top = 104
+    Width = 674
+    Align = alCustom
+    Anchors = [akTop, akLeft, akRight, akBottom]
+    OnChange = Memo1Change
+    OnDblClick = Memo1DblClick
+    ReadOnly = True
+    ScrollBars = ssAutoVertical
+    TabOrder = 1
+    WantReturns = False
+  end
+  object edtSend: TEdit
+    Left = 8
+    Height = 23
+    Top = 72
+    Width = 592
+    Anchors = [akTop, akLeft, akRight]
+    TabOrder = 2
+  end
+  object btnSend: TButton
+    Left = 607
+    Height = 23
+    Top = 72
+    Width = 75
+    Anchors = [akTop, akRight]
+    Caption = 'Send'
+    Enabled = False
+    OnClick = btnSendClick
+    TabOrder = 3
+  end
+  object btnDisconnect: TButton
+    Left = 607
+    Height = 49
+    Top = 8
+    Width = 75
+    Anchors = [akTop, akRight]
+    Caption = 'Disconnect'
+    Enabled = False
+    OnClick = btnDisconnectClick
+    TabOrder = 4
+  end
+  object StatusBar1: TStatusBar
+    Left = 0
+    Height = 23
+    Top = 297
+    Width = 690
+    Panels = <>
+    SimplePanel = False
+  end
+  object cbxBoudRate: TComboBoxEx
+    Left = 408
+    Height = 22
+    Top = 33
+    Width = 100
+    Anchors = [akTop, akRight]
+    ItemHeight = 16
+    ItemsEx = <    
+      item
+        Caption = '1200'
+      end    
+      item
+        Caption = '2400'
+      end    
+      item
+        Caption = '4800'
+      end    
+      item
+        Caption = '9600'
+      end    
+      item
+        Caption = '14400'
+      end    
+      item
+        Caption = '19200'
+      end    
+      item
+        Caption = '38400'
+      end    
+      item
+        Caption = '56000'
+      end    
+      item
+        Caption = '57600'
+      end    
+      item
+        Caption = '115200'
+      end>
+    ItemIndex = 3
+    TabOrder = 6
+  end
+  object lblBaud: TLabel
+    Left = 408
+    Height = 15
+    Top = 8
+    Width = 53
+    Anchors = [akTop, akRight]
+    Caption = 'Baud Rate'
+    ParentColor = False
+  end
+  object MainMenu1: TMainMenu
+    Left = 488
+    Top = 152
+    object MenuItem1: TMenuItem
+      Caption = 'File'
+      object MenuItem2: TMenuItem
+        Caption = 'Exit'
+      end
+    end
+    object MenuItem3: TMenuItem
+      Caption = 'About'
+    end
+  end
+end
