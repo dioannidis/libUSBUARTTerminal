@@ -6,10 +6,10 @@ unit usbasp_uart;
 
   libUSB UART Terminal types and helper functions.
 
-  Copyright (C) 2018 Dimitrios Chr. Ioannidis.
+  Copyright (C) 2020 Dimitrios Chr. Ioannidis.
     Nephelae - https://www.nephelae.eu
 
-  https://www.nephelae.eu/USBaspUARTTerminal/
+  https://www.nephelae.eu/
 
   Licensed under the MIT License (MIT).
   See licence file in root directory.
@@ -34,6 +34,39 @@ uses
   libusb;
 
 const
+  USBASP_UART_PARITY_MASK = %11;
+  USBASP_UART_PARITY_NONE = %00;
+  USBASP_UART_PARITY_EVEN = %01;
+  USBASP_UART_PARITY_ODD = %10;
+
+  USBASP_UART_STOP_MASK = %100;
+  USBASP_UART_STOP_1BIT = %000;
+  USBASP_UART_STOP_2BIT = %100;
+
+  USBASP_UART_BYTES_MASK = %111000;
+  USBASP_UART_BYTES_5B = %000000;
+  USBASP_UART_BYTES_6B = %001000;
+  USBASP_UART_BYTES_7B = %010000;
+  USBASP_UART_BYTES_8B = %011000;
+  USBASP_UART_BYTES_9B = %100000;
+
+type
+  USBaspUART = record
+    USBHandle: plibusb_device_handle;
+    USBContext: plibusb_context;
+  end;
+
+function usbasp_uart_config(var AUSBasp: USBaspUART; ABaud: integer;
+  AFlags: integer): integer;
+function usbasp_uart_read(var AUSBasp: USBaspUART; var ABuff: array of byte;
+  len: integer): integer;
+function usbasp_uart_write(var AUSBasp: USBaspUART; var ABuff: array of byte;
+  len: integer): integer;
+procedure usbasp_uart_disable(var AUSBasp: USBaspUART);
+
+implementation
+
+const
   USB_ERROR_NOTFOUND = 1;
   USB_ERROR_ACCESS = 2;
   USB_ERROR_IO = 3;
@@ -54,43 +87,7 @@ const
 
   USBASP_CAP_6_UART = (1 shl 6);
 
-  USBASP_UART_PARITY_MASK = %11;
-  USBASP_UART_PARITY_NONE = %00;
-  USBASP_UART_PARITY_EVEN = %01;
-  USBASP_UART_PARITY_ODD = %10;
-
-  USBASP_UART_STOP_MASK = %100;
-  USBASP_UART_STOP_1BIT = %000;
-  USBASP_UART_STOP_2BIT = %100;
-
-  USBASP_UART_BYTES_MASK = %111000;
-  USBASP_UART_BYTES_5B = %000000;
-  USBASP_UART_BYTES_6B = %001000;
-  USBASP_UART_BYTES_7B = %010000;
-  USBASP_UART_BYTES_8B = %011000;
-  USBASP_UART_BYTES_9B = %100000;
-
   USBASP_NO_CAPS = (-4);
-
-type
-  USBaspUART = record
-    USBHandle: plibusb_device_handle;
-    USBContext: plibusb_context;
-  end;
-
-function usbasp_uart_open(var AUSBasp: USBaspUART): integer;
-function usbasp_uart_capabilities(var AUSBasp: USBaspUART): uint32_t;
-function usbasp_uart_transmit(var AUSBasp: USBaspUART; AReceive: uint8_t;
-  AFunctionId: uint8_t; ASend: array of byte; var ABuffer: array of byte;
-  ABufferSize: uint16_t): integer;
-function usbasp_uart_config(var AUSBasp: USBaspUART; ABaud: integer;
-  AFlags: integer): integer;
-function usbasp_uart_read(var AUSBasp: USBaspUART;
-  var ABuff: array of byte; len: integer): integer;
-
-procedure usbasp_uart_disable(var AUSBasp: USBaspUART);
-
-implementation
 
 type
   pplibusb_device = ^plibusb_device;
@@ -170,6 +167,22 @@ begin
     Result := 0;
 end;
 
+function usbasp_uart_transmit(var AUSBasp: USBaspUART; AReceive: uint8_t;
+  AFunctionId: uint8_t; ASend: array of byte; var ABuffer: array of byte;
+  ABufferSize: uint16_t): integer;
+var
+  Res: integer;
+begin
+  Res := libusb_control_transfer(AUSBasp.USBHandle,
+    (byte(LIBUSB_REQUEST_TYPE_VENDOR) or byte(LIBUSB_RECIPIENT_DEVICE) or
+    (AReceive shl 7)) and $FF,
+    //($40 or (AReceive shl 7)) and $FF,
+    //AReceive,
+    AFunctionId, ((ASend[1] shl 8) or ASend[0]), ((ASend[3] shl 8) or ASend[2]),
+    @ABuffer[0], ABufferSize, 5000);
+  Result := Res;
+end;
+
 function usbasp_uart_capabilities(var AUSBasp: USBaspUART): uint32_t;
 var
   Res: array [0..3] of uint8_t;
@@ -181,23 +194,6 @@ begin
   if iResult = 4 then
     Result := Res[0] or (uint32_t(Res[1]) shl 8) or (uint32_t(Res[2]) shl 16) or
       (Ord(Res[3]) shl 24);
-end;
-
-function usbasp_uart_transmit(var AUSBasp: USBaspUART; AReceive: uint8_t;
-  AFunctionId: uint8_t; ASend: array of byte; var ABuffer: array of byte;
-  ABufferSize: uint16_t): integer;
-var
-  Res: integer;
-begin
-  FillChar(ABuffer, SizeOf(ABuffer), 0);
-  Res := libusb_control_transfer(AUSBasp.USBHandle,
-    (byte(LIBUSB_REQUEST_TYPE_VENDOR) or byte(LIBUSB_RECIPIENT_DEVICE) or
-    (AReceive shl 7)) and $FF,
-    //($40 or (AReceive shl 7)) and $FF,
-    //AReceive,
-    AFunctionId, ((ASend[1] shl 8) or ASend[0]), ((ASend[3] shl 8) or ASend[2]),
-    @ABuffer[0], ABufferSize, 5000);
-  Result := Res;
 end;
 
 function usbasp_uart_config(var AUSBasp: USBaspUART; ABaud: integer;
@@ -221,9 +217,9 @@ begin
     exit;
   end;
 
-try
-  Presc := FOSC div 8 div ABaud - 1;
-  RealBaud := FOSC div 8 div (Presc + 1);
+  try
+    Presc := FOSC div 8 div ABaud - 1;
+    RealBaud := FOSC div 8 div (Presc + 1);
   except
   end;
 
@@ -245,12 +241,27 @@ end;
 
 function usbasp_uart_read(var AUSBasp: USBaspUART; var ABuff: array of byte;
   len: integer): integer;
-var
-  iResult: integer;
 begin
   if (len > 254) then
-    len := 254; // Limitation of V-USB library.
+    len := 254;
+  // The USBasp V-USB library is not configured with USB_CFG_LONG_TRANSFERS for long transfers.
   Result := usbasp_uart_transmit(AUSBasp, 1, USBASP_FUNC_UART_RX, locDummy, ABuff, len);
+end;
+
+function usbasp_uart_write(var AUSBasp: USBaspUART; var ABuff: array of byte;
+  len: integer): integer;
+var
+  TXFree: array[0..1] of byte;
+  TXAvail: byte;
+begin
+  FillChar(TXFree, SizeOf(TXFree), 0);
+  usbasp_uart_transmit(AUSBasp, 1, USBASP_FUNC_UART_TX_FREE, locDummy, TXFree, 2);
+  TXAvail := (TXFree[0] shl 8) or byte(TXFree[1]);
+  if TXAvail = 0 then
+    exit;
+  if len > TXAvail then
+    len := TXAvail;
+  Result := usbasp_uart_transmit(AUSBasp, 0, USBASP_FUNC_UART_TX, locDummy, ABuff, len);
 end;
 
 procedure usbasp_uart_disable(var AUSBasp: USBaspUART);
