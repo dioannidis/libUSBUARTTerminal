@@ -38,8 +38,8 @@ uses {$IFDEF UNIX} {$IFDEF UseCThreads}
 
 begin
   RequireDerivedFormResource := True;
-  Application.Title := 'USBasp UART Terminal';
-  Application.Scaled := True;
+  Application.Title:='USBasp UART Terminal';
+  Application.Scaled:=True;
   Application.Initialize;
   Application.CreateForm(TfrmMain, frmMain);
   Application.Run;
