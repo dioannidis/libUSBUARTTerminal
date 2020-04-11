@@ -4,12 +4,13 @@ object frmMain: TfrmMain
   Top = 250
   Width = 690
   Caption = 'Form2'
-  ClientHeight = 320
+  ClientHeight = 300
   ClientWidth = 690
   KeyPreview = True
   Menu = MainMenu1
   OnCreate = FormCreate
   OnKeyPress = FormKeyPress
+  LCLVersion = '2.1.0.0'
   object btnConnect: TButton
     Left = 520
     Height = 49
