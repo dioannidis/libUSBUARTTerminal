@@ -58,9 +58,9 @@ type
 
 function usbasp_uart_config(var AUSBasp: USBaspUART; ABaud: integer;
   AFlags: integer): integer;
-function usbasp_uart_read(var AUSBasp: USBaspUART; var ABuff: array of byte;
+function usbasp_uart_read(var AUSBasp: USBaspUART; ABuff: PChar;
   len: integer): integer;
-function usbasp_uart_write(var AUSBasp: USBaspUART; var ABuff: array of byte;
+function usbasp_uart_write(var AUSBasp: USBaspUART; ABuff: PChar;
   len: integer): integer;
 procedure usbasp_uart_disable(var AUSBasp: USBaspUART);
 
@@ -168,19 +168,16 @@ begin
 end;
 
 function usbasp_uart_transmit(var AUSBasp: USBaspUART; AReceive: uint8_t;
-  AFunctionId: uint8_t; ASend: array of byte; var ABuffer: array of byte;
+  AFunctionId: uint8_t; ASend: array of byte; ABuffer: PChar;
   ABufferSize: uint16_t): integer;
-var
-  Res: integer;
 begin
-  Res := libusb_control_transfer(AUSBasp.USBHandle,
+  Result := libusb_control_transfer(AUSBasp.USBHandle,
     (byte(LIBUSB_REQUEST_TYPE_VENDOR) or byte(LIBUSB_RECIPIENT_DEVICE) or
     (AReceive shl 7)) and $FF,
     //($40 or (AReceive shl 7)) and $FF,
     //AReceive,
     AFunctionId, ((ASend[1] shl 8) or ASend[0]), ((ASend[3] shl 8) or ASend[2]),
     @ABuffer[0], ABufferSize, 5000);
-  Result := Res;
 end;
 
 function usbasp_uart_capabilities(var AUSBasp: USBaspUART): uint32_t;
@@ -190,7 +187,7 @@ var
 begin
   Result := 0;
   iResult := usbasp_uart_transmit(AUSBasp, 1, USBASP_FUNC_GETCAPABILITIES,
-    locDummy, Res, length(Res));
+    locDummy, PChar(@Res[0]), length(Res));
   if iResult = 4 then
     Result := Res[0] or (uint32_t(Res[1]) shl 8) or (uint32_t(Res[2]) shl 16) or
       (Ord(Res[3]) shl 24);
@@ -235,11 +232,11 @@ begin
   Send[2] := AFlags and $FF;
 
   iResult := usbasp_uart_transmit(AUSBasp, 1, USBASP_FUNC_UART_CONFIG,
-    Send, locDummy, 0);
+    Send, PChar(@locDummy[0]), 0);
   Result := 0;
 end;
 
-function usbasp_uart_read(var AUSBasp: USBaspUART; var ABuff: array of byte;
+function usbasp_uart_read(var AUSBasp: USBaspUART; ABuff: PChar;
   len: integer): integer;
 begin
   if (len > 254) then
@@ -248,14 +245,14 @@ begin
   Result := usbasp_uart_transmit(AUSBasp, 1, USBASP_FUNC_UART_RX, locDummy, ABuff, len);
 end;
 
-function usbasp_uart_write(var AUSBasp: USBaspUART; var ABuff: array of byte;
+function usbasp_uart_write(var AUSBasp: USBaspUART; ABuff: PChar;
   len: integer): integer;
 var
   TXFree: array[0..1] of byte;
-  TXAvail: byte;
+  TXAvail: integer;
 begin
   FillChar(TXFree, SizeOf(TXFree), 0);
-  usbasp_uart_transmit(AUSBasp, 1, USBASP_FUNC_UART_TX_FREE, locDummy, TXFree, 2);
+  usbasp_uart_transmit(AUSBasp, 1, USBASP_FUNC_UART_TX_FREE, locDummy, PChar(@TXFree[0]), 2);
   TXAvail := (TXFree[0] shl 8) or byte(TXFree[1]);
   if TXAvail = 0 then
     exit;
@@ -269,7 +266,7 @@ var
   iResult: integer;
 begin
   iResult := usbasp_uart_transmit(AUSBasp, 1, USBASP_FUNC_UART_DISABLE,
-    locDummy, locDummy, 0);
+    locDummy, PChar(@locDummy[0]), 0);
   iResult := libusb_release_interface(AUSBasp.USBHandle, 0);
   libusb_close(AUSBasp.USBHandle);
   libusb_exit(AUSBasp.USBContext);

@@ -32,36 +32,48 @@ interface
 
 uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, StdCtrls, Menus,
-  ComCtrls, ComboEx, usbasp_uart;
+  ComCtrls, ComboEx, ExtCtrls, MaskEdit, uusbasp;
 
 type
 
   { TfrmMain }
 
   TfrmMain = class(TForm)
+    btnClearMemo: TButton;
     btnConnect: TButton;
     btnSend: TButton;
     btnDisconnect: TButton;
     cbxBoudRate: TComboBoxEx;
+    cbxLineBreak: TComboBoxEx;
+    ckbAutoScroll: TCheckBox;
+    ckbTimeStamp: TCheckBox;
     edtSend: TEdit;
+    gbNoRuntimeSettings: TGroupBox;
+    GroupBox2: TGroupBox;
     lblBaud: TLabel;
+    lblMemoBufferLines: TLabel;
+    lblLineBreak: TLabel;
     MainMenu1: TMainMenu;
+    medtMemoBufferLines: TMaskEdit;
     Memo1: TMemo;
     MenuItem1: TMenuItem;
     MenuItem2: TMenuItem;
     MenuItem3: TMenuItem;
     StatusBar1: TStatusBar;
+    procedure btnClearMemoClick(Sender: TObject);
     procedure btnConnectClick(Sender: TObject);
     procedure btnSendClick(Sender: TObject);
     procedure btnDisconnectClick(Sender: TObject);
+    procedure ckbAutoScrollChange(Sender: TObject);
+    procedure ckbTimeStampChange(Sender: TObject);
+    procedure FormCloseQuery(Sender: TObject; var CanClose: boolean);
     procedure FormCreate(Sender: TObject);
     procedure FormKeyPress(Sender: TObject; var Key: char);
+    procedure medtMemoBufferLinesChange(Sender: TObject);
     procedure Memo1Change(Sender: TObject);
-    procedure Memo1DblClick(Sender: TObject);
   private
-    USBasp: USBaspUART;
-    FIsRunning, FStopReading: boolean;
-    procedure ToggleGUI(AConnect: boolean);
+    FUSBaspThread: TUSBaspThread;
+    procedure ToggleGUI(ARunning: boolean);
   public
 
   end;
@@ -81,65 +93,52 @@ const
 { TfrmMain }
 
 procedure TfrmMain.btnConnectClick(Sender: TObject);
-var
-  StrBuffer: array [0..253] of byte;
-  tmpData: TBytes;
-  iStrLength, tmpPos: integer;
-  StrLines: TStringArray;
-  i: byte;
 begin
-  if FIsRunning then
-    Exit;
+  FUSBaspThread := TUSBaspThread.Create(BaudInt[cbxBoudRate.ItemIndex + 3],
+    Memo1, TLineBreakMode(cbxLineBreak.ItemIndex), ckbAutoScroll.State =
+    cbChecked, ckbTimeStamp.State = cbChecked);
+  FUSBaspThread.FreeOnTerminate := True;
+  FUSBaspThread.Start;
   ToggleGUI(True);
-  usbasp_uart_config(USBasp, BaudInt[cbxBoudRate.ItemIndex + 3],
-    USBASP_UART_PARITY_NONE or USBASP_UART_BYTES_8B or USBASP_UART_STOP_1BIT);
-  tmpPos := 0;
-  repeat
-    if tmpPos = 0 then
-      SetLength(tmpData, 8192);
-    iStrLength := usbasp_uart_read(USBasp, StrBuffer, Length(StrBuffer));
-    if iStrLength = 0 then
-      Application.ProcessMessages;
-    if iStrLength > 0 then
-    begin
-      Move(StrBuffer[0], tmpData[tmpPos], iStrLength);
-      Inc(tmpPos, iStrLength);
-    end
-    else
-    if tmpPos <> 0 then
-    begin
-      StrLines := TEncoding.ASCII.GetAnsiString(tmpData).Split([#10#13]);
-      if not StrLines[0].IsEmpty then
-        Memo1.Lines[Memo1.Lines.Count - 1] :=
-          Memo1.Lines[Memo1.Lines.Count - 1] + StrLines[0];
-      for i := 1 to High(StrLines) do
-        Memo1.Append(StrLines[i]);
-      tmpPos := 0;
-      tmpData := nil;
-    end;
-  until FStopReading;
-  usbasp_uart_disable(USBasp);
+end;
+
+procedure TfrmMain.btnClearMemoClick(Sender: TObject);
+begin
+  Memo1.Clear;
 end;
 
 procedure TfrmMain.btnSendClick(Sender: TObject);
-var
-  StrBuffer: array of byte;
-  tmpData: TBytes;
-  iStrLength: integer;
 begin
-  if not FIsRunning then
-    Exit;
-  FillChar(StrBuffer, SizeOf(StrBuffer), 0);
-  tmpData := BytesOf(edtSend.Text);
-  SetLength(StrBuffer, Length(tmpData));
-  Move(tmpData[0], StrBuffer[0], Length(tmpData));
-  iStrLength := usbasp_uart_write(USBasp, StrBuffer, Length(StrBuffer));
-  Application.ProcessMessages;
+  FUSBaspThread.SendBuffer := edtSend.Text;
 end;
 
 procedure TfrmMain.btnDisconnectClick(Sender: TObject);
 begin
-  ToggleGUI(False);
+  if Assigned(FUSBaspThread) then
+  begin
+    FUSBaspThread.Terminate;
+    FUSBaspThread.WaitFor;
+    FUSBaspThread := nil;
+    ToggleGUI(False);
+  end;
+end;
+
+procedure TfrmMain.ckbAutoScrollChange(Sender: TObject);
+begin
+  if Assigned(FUSBaspThread) then
+    FUSBaspThread.AutoScroll := ckbAutoScroll.State = cbChecked;
+end;
+
+procedure TfrmMain.ckbTimeStampChange(Sender: TObject);
+begin
+  if Assigned(FUSBaspThread) then
+    FUSBaspThread.TimeStamp := ckbTimeStamp.State = cbChecked;
+end;
+
+procedure TfrmMain.FormCloseQuery(Sender: TObject; var CanClose: boolean);
+begin
+  btnDisconnectClick(Self);
+  CanClose := not Assigned(FUSBaspThread);
 end;
 
 procedure TfrmMain.FormCreate(Sender: TObject);
@@ -150,37 +149,45 @@ end;
 procedure TfrmMain.FormKeyPress(Sender: TObject; var Key: char);
 begin
   if Key = #27 then
-    ToggleGUI(False);
+    btnDisconnectClick(Self);
+end;
+
+procedure TfrmMain.medtMemoBufferLinesChange(Sender: TObject);
+begin
+  if StrToInt(medtMemoBufferLines.Text) < 100 then
+    medtMemoBufferLines.Text := '100';
 end;
 
 procedure TfrmMain.Memo1Change(Sender: TObject);
 begin
-  if Memo1.Lines.Count > 300 then
-    Memo1.Clear;
-end;
-
-procedure TfrmMain.Memo1DblClick(Sender: TObject);
-begin
-  Memo1.Clear;
-end;
-
-procedure TfrmMain.ToggleGUI(AConnect: boolean);
-begin
-  if AConnect then
+  if Memo1.Lines.Count > StrToInt(medtMemoBufferLines.Text) + 10 then
   begin
-    FIsRunning := True;
-    FStopReading := False;
+    Memo1.Lines.BeginUpdate;
+    while Memo1.Lines.Count > StrToInt(medtMemoBufferLines.Text) do
+      Memo1.Lines.Delete(0);
+    Memo1.Lines.EndUpdate;
+  end;
+end;
+
+procedure TfrmMain.ToggleGUI(ARunning: boolean);
+begin
+  if ARunning then
+  begin
     btnConnect.Enabled := False;
+    gbNoRuntimeSettings.Enabled := False;
     btnDisconnect.Enabled := True;
+    edtSend.Enabled := True;
     btnSend.Enabled := True;
+    edtSend.SetFocus;
   end
   else
   begin
-    FIsRunning := False;
-    FStopReading := True;
     btnConnect.Enabled := True;
+    gbNoRuntimeSettings.Enabled := True;
     btnDisconnect.Enabled := False;
+    edtSend.Enabled := False;
     btnSend.Enabled := False;
+    btnConnect.SetFocus;
   end;
 end;
 

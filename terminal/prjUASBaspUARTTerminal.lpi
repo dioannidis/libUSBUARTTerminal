@@ -66,7 +66,7 @@
         <PackageName Value="LCL"/>
       </Item1>
     </RequiredPackages>
-    <Units Count="3">
+    <Units Count="4">
       <Unit0>
         <Filename Value="prjUASBaspUARTTerminal.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -82,6 +82,11 @@
         <Filename Value="..\source\libusb.pp"/>
         <IsPartOfProject Value="True"/>
       </Unit2>
+      <Unit3>
+        <Filename Value="uusbasp.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="uUSBasp"/>
+      </Unit3>
     </Units>
     <Debugger>
       <Backend Value="{DD97F5F8-485F-49BD-AEAF-BFFD9261B3BE}"/>
@@ -116,7 +121,6 @@
       <Debugging>
         <DebugInfoType Value="dsDwarf2"/>
         <UseHeaptrc Value="True"/>
-        <TrashVariables Value="True"/>
         <UseExternalDbgSyms Value="True"/>
       </Debugging>
       <Options>

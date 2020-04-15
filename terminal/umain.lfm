@@ -1,131 +1,228 @@
 object frmMain: TfrmMain
-  Left = 388
+  Left = 861
   Height = 320
-  Top = 250
-  Width = 690
+  Top = 167
+  Width = 662
   Caption = 'Form2'
   ClientHeight = 300
-  ClientWidth = 690
+  ClientWidth = 662
+  Constraints.MinHeight = 320
+  Constraints.MinWidth = 662
   KeyPreview = True
   Menu = MainMenu1
+  OnCloseQuery = FormCloseQuery
   OnCreate = FormCreate
   OnKeyPress = FormKeyPress
   LCLVersion = '2.1.0.0'
   object btnConnect: TButton
-    Left = 520
-    Height = 49
+    Left = 496
+    Height = 31
     Top = 8
     Width = 75
-    Anchors = [akTop, akRight]
     Caption = 'Connect'
     OnClick = btnConnectClick
     TabOrder = 0
   end
-  object Memo1: TMemo
-    Left = 8
-    Height = 208
-    Top = 104
-    Width = 674
-    Align = alCustom
-    Anchors = [akTop, akLeft, akRight, akBottom]
-    OnChange = Memo1Change
-    OnDblClick = Memo1DblClick
-    ReadOnly = True
-    ScrollBars = ssAutoVertical
-    TabOrder = 1
-    WantReturns = False
-  end
   object edtSend: TEdit
     Left = 8
     Height = 23
-    Top = 72
-    Width = 592
+    Top = 80
+    Width = 570
     Anchors = [akTop, akLeft, akRight]
-    TabOrder = 2
+    Enabled = False
+    TabOrder = 1
   end
   object btnSend: TButton
-    Left = 607
+    Left = 583
     Height = 23
-    Top = 72
+    Top = 80
     Width = 75
     Anchors = [akTop, akRight]
     Caption = 'Send'
     Enabled = False
     OnClick = btnSendClick
-    TabOrder = 3
+    TabOrder = 2
   end
   object btnDisconnect: TButton
-    Left = 607
-    Height = 49
+    Left = 575
+    Height = 31
     Top = 8
     Width = 75
-    Anchors = [akTop, akRight]
     Caption = 'Disconnect'
     Enabled = False
     OnClick = btnDisconnectClick
-    TabOrder = 4
+    TabOrder = 3
   end
   object StatusBar1: TStatusBar
     Left = 0
     Height = 23
-    Top = 297
-    Width = 690
+    Top = 277
+    Width = 662
     Panels = <>
     SimplePanel = False
   end
-  object cbxBoudRate: TComboBoxEx
-    Left = 408
-    Height = 22
-    Top = 33
-    Width = 100
-    Anchors = [akTop, akRight]
-    ItemHeight = 16
-    ItemsEx = <    
-      item
-        Caption = '1200'
-      end    
-      item
-        Caption = '2400'
-      end    
-      item
-        Caption = '4800'
-      end    
-      item
-        Caption = '9600'
-      end    
-      item
-        Caption = '14400'
-      end    
-      item
-        Caption = '19200'
-      end    
-      item
-        Caption = '38400'
-      end    
-      item
-        Caption = '56000'
-      end    
-      item
-        Caption = '57600'
-      end    
-      item
-        Caption = '115200'
-      end>
-    ItemIndex = 3
-    TabOrder = 6
+  object gbNoRuntimeSettings: TGroupBox
+    Left = 8
+    Height = 73
+    Top = 0
+    Width = 272
+    ClientHeight = 53
+    ClientWidth = 268
+    TabOrder = 5
+    object lblLineBreak: TLabel
+      Left = 8
+      Height = 15
+      Top = 0
+      Width = 54
+      Caption = 'Line Break'
+      ParentColor = False
+    end
+    object cbxLineBreak: TComboBoxEx
+      Left = 8
+      Height = 22
+      Top = 17
+      Width = 100
+      AutoSize = False
+      ItemHeight = 16
+      ItemsEx = <      
+        item
+          Caption = 'No Line Break'
+        end      
+        item
+          Caption = 'Only CR'
+        end      
+        item
+          Caption = 'Only CR'
+        end      
+        item
+          Caption = 'Both CR & LF'
+        end>
+      ItemIndex = 3
+      Style = csExDropDownList
+      TabOrder = 0
+    end
+    object cbxBoudRate: TComboBoxEx
+      Left = 121
+      Height = 22
+      Top = 17
+      Width = 63
+      AutoSize = False
+      ItemHeight = 16
+      ItemsEx = <      
+        item
+          Caption = '1200'
+        end      
+        item
+          Caption = '2400'
+        end      
+        item
+          Caption = '4800'
+        end      
+        item
+          Caption = '9600'
+        end      
+        item
+          Caption = '14400'
+        end      
+        item
+          Caption = '19200'
+        end      
+        item
+          Caption = '38400'
+        end>
+      ItemIndex = 3
+      Style = csExDropDownList
+      TabOrder = 1
+    end
+    object lblBaud: TLabel
+      Left = 120
+      Height = 15
+      Top = 0
+      Width = 53
+      Caption = 'Baud Rate'
+      ParentColor = False
+    end
+    object medtMemoBufferLines: TMaskEdit
+      Left = 194
+      Height = 23
+      Top = 17
+      Width = 62
+      Alignment = taRightJustify
+      CharCase = ecNormal
+      MaxLength = 3
+      TabOrder = 2
+      OnChange = medtMemoBufferLinesChange
+      EditMask = '990;0;_'
+      Text = '150'
+      SpaceChar = '_'
+    end
+    object lblMemoBufferLines: TLabel
+      Left = 194
+      Height = 15
+      Top = 0
+      Width = 62
+      Caption = 'Lines Buffer'
+      ParentColor = False
+    end
   end
-  object lblBaud: TLabel
-    Left = 408
-    Height = 15
-    Top = 8
-    Width = 53
-    Anchors = [akTop, akRight]
-    Caption = 'Baud Rate'
-    ParentColor = False
+  object GroupBox2: TGroupBox
+    Left = 288
+    Height = 73
+    Top = 0
+    Width = 200
+    ClientHeight = 53
+    ClientWidth = 196
+    TabOrder = 6
+    object ckbAutoScroll: TCheckBox
+      Left = 16
+      Height = 19
+      Top = 0
+      Width = 75
+      Caption = 'AutoScroll'
+      Checked = True
+      OnChange = ckbAutoScrollChange
+      State = cbChecked
+      TabOrder = 0
+    end
+    object btnClearMemo: TButton
+      Left = 112
+      Height = 23
+      Top = 24
+      Width = 75
+      Caption = 'Clear'
+      OnClick = btnClearMemoClick
+      TabOrder = 1
+    end
+    object ckbTimeStamp: TCheckBox
+      Left = 16
+      Height = 19
+      Top = 28
+      Width = 81
+      Caption = 'TimeStamp'
+      OnChange = ckbTimeStampChange
+      TabOrder = 2
+    end
+  end
+  object Memo1: TMemo
+    Left = 0
+    Height = 165
+    Top = 112
+    Width = 662
+    Align = alBottom
+    Anchors = [akTop, akLeft, akRight, akBottom]
+    Color = clBackground
+    Font.Color = clLime
+    Font.Name = 'Terminal'
+    OnChange = Memo1Change
+    ParentFont = False
+    ReadOnly = True
+    ScrollBars = ssAutoBoth
+    TabOrder = 7
+    WordWrap = False
   end
   object MainMenu1: TMainMenu
-    Left = 488
-    Top = 152
+    Left = 312
+    Top = 96
     object MenuItem1: TMenuItem
       Caption = 'File'
       object MenuItem2: TMenuItem
