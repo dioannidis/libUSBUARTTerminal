@@ -1,18 +1,21 @@
 object frmMain: TfrmMain
-  Left = 861
+  Left = 694
   Height = 320
-  Top = 167
+  Top = 387
   Width = 662
   Caption = 'Form2'
   ClientHeight = 300
   ClientWidth = 662
   Constraints.MinHeight = 320
   Constraints.MinWidth = 662
+  DefaultMonitor = dmPrimary
   KeyPreview = True
-  Menu = MainMenu1
-  OnCloseQuery = FormCloseQuery
+  Menu = AppMainMenu
   OnCreate = FormCreate
+  OnDestroy = FormDestroy
   OnKeyPress = FormKeyPress
+  Position = poScreenCenter
+  SessionProperties = 'cbxBoudRate.ItemIndex;Height;Left;Top;Width;ckbAutoScroll.Checked;ckbTimeStamp.Checked;cbxLineBreak.ItemIndex;medtMemoBufferLines.Text'
   LCLVersion = '2.1.0.0'
   object btnConnect: TButton
     Left = 496
@@ -53,13 +56,12 @@ object frmMain: TfrmMain
     OnClick = btnDisconnectClick
     TabOrder = 3
   end
-  object StatusBar1: TStatusBar
+  object AppStatusBar: TStatusBar
     Left = 0
     Height = 23
     Top = 277
     Width = 662
     Panels = <>
-    SimplePanel = False
   end
   object gbNoRuntimeSettings: TGroupBox
     Left = 8
@@ -203,7 +205,7 @@ object frmMain: TfrmMain
       TabOrder = 2
     end
   end
-  object Memo1: TMemo
+  object mmDisplay: TMemo
     Left = 0
     Height = 165
     Top = 112
@@ -213,24 +215,59 @@ object frmMain: TfrmMain
     Color = clBackground
     Font.Color = clLime
     Font.Name = 'Terminal'
-    OnChange = Memo1Change
+    OnChange = mmDisplayChange
     ParentFont = False
     ReadOnly = True
     ScrollBars = ssAutoBoth
     TabOrder = 7
     WordWrap = False
   end
-  object MainMenu1: TMainMenu
-    Left = 312
-    Top = 96
-    object MenuItem1: TMenuItem
+  object AppMainMenu: TMainMenu
+    Left = 152
+    Top = 120
+    object miFile: TMenuItem
       Caption = 'File'
-      object MenuItem2: TMenuItem
+      object miExit: TMenuItem
         Caption = 'Exit'
+        OnClick = miExitClick
       end
     end
-    object MenuItem3: TMenuItem
+    object miAbout: TMenuItem
       Caption = 'About'
+      OnClick = miAboutClick
     end
+  end
+  object USBaspUARTAbout: TSplashAbout
+    PoweredBy.About.Description.Strings = (
+      'Component that shows a Powered By graphic.'#13#10'Use method ShowPoweredByForm in your form.create()'#13#10'to use the component'
+    )
+    PoweredBy.About.Title = 'About About PoweredBy component'
+    PoweredBy.About.Height = 280
+    PoweredBy.About.Width = 400
+    PoweredBy.About.Font.Color = clNavy
+    PoweredBy.About.Font.Height = -13
+    PoweredBy.About.Font.Name = 'Arial'
+    PoweredBy.About.BackGroundColor = clWindow
+    PoweredBy.About.Version = '1.0.4.0'
+    PoweredBy.About.Authorname = 'Gordon Bamber'
+    PoweredBy.About.Organisation = 'Public Domain'
+    PoweredBy.About.AuthorEmail = 'minesadorada@charcodelvalle.com'
+    PoweredBy.About.ComponentName = 'PoweredBy component'
+    PoweredBy.About.LicenseType = abModifiedGPL
+    DelaySeconds = 3
+    BackGroundColor = clAppWorkspace
+    MaskType = saRoundedRect
+    LicenseFile = saMIT
+    Author = 'Dimitrios Chr. Ioannidis'
+    TitleStyle = saApplication
+    UserTitle = 'USBasp UART Terminal'
+    ShowDescription = True
+    Left = 48
+    Top = 120
+  end
+  object AppXMLPropStorage: TXMLPropStorage
+    StoredValues = <>
+    Left = 264
+    Top = 120
   end
 end

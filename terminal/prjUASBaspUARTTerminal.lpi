@@ -13,10 +13,17 @@
       <ResourceType Value="res"/>
       <UseXPManifest Value="True"/>
       <XPManifest>
-        <DpiAware Value="True"/>
+        <DpiAware Value="True/PM_V2"/>
       </XPManifest>
       <Icon Value="0"/>
     </General>
+    <VersionInfo>
+      <UseVersionInfo Value="True"/>
+      <AutoIncrementBuild Value="True"/>
+      <MinorVersionNr Value="3"/>
+      <BuildNr Value="5"/>
+      <StringTable FileDescription="USBasp UART Terminal" InternalName="prjUSBaspUARTTerminal" LegalCopyright="© 2020 Dimitrios Chr. Ioannidis" LegalTrademarks="© 2020 Dimitrios Chr. Ioannidis" OriginalFilename="prjUSBaspUARTTerminal.exe" ProductName="USBasp UART Terminal" ProductVersion="0.0"/>
+    </VersionInfo>
     <BuildModes Count="2">
       <Item1 Name="Debug" Default="True"/>
       <Item2 Name="Release">
@@ -24,12 +31,12 @@
           <Version Value="11"/>
           <PathDelim Value="\"/>
           <Target>
-            <Filename Value="prjUASBaspUARTTerminal"/>
+            <Filename Value="bin\$(TargetCPU)-$(TargetOS)\$(BuildMode)\prjUASBaspUARTTerminal"/>
           </Target>
           <SearchPaths>
             <IncludeFiles Value="$(ProjOutDir)"/>
             <OtherUnitFiles Value="..\source"/>
-            <UnitOutputDirectory Value="lib\$(TargetCPU)-$(TargetOS)"/>
+            <UnitOutputDirectory Value="lib\$(TargetCPU)-$(TargetOS)\$(BuildMode)"/>
           </SearchPaths>
           <CodeGeneration>
             <SmartLinkUnit Value="True"/>
@@ -61,32 +68,26 @@
         <Mode0 Name="default"/>
       </Modes>
     </RunParams>
-    <RequiredPackages Count="1">
+    <RequiredPackages Count="2">
       <Item1>
-        <PackageName Value="LCL"/>
+        <PackageName Value="splashabout"/>
       </Item1>
+      <Item2>
+        <PackageName Value="LCL"/>
+      </Item2>
     </RequiredPackages>
-    <Units Count="4">
+    <Units Count="2">
       <Unit0>
         <Filename Value="prjUASBaspUARTTerminal.lpr"/>
         <IsPartOfProject Value="True"/>
       </Unit0>
       <Unit1>
-        <Filename Value="..\source\umain.pas"/>
+        <Filename Value="uusbaspuartterminal.pas"/>
         <IsPartOfProject Value="True"/>
         <ComponentName Value="frmMain"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
       </Unit1>
-      <Unit2>
-        <Filename Value="..\source\libusb.pp"/>
-        <IsPartOfProject Value="True"/>
-      </Unit2>
-      <Unit3>
-        <Filename Value="uusbasp.pas"/>
-        <IsPartOfProject Value="True"/>
-        <UnitName Value="uUSBasp"/>
-      </Unit3>
     </Units>
     <Debugger>
       <Backend Value="{DD97F5F8-485F-49BD-AEAF-BFFD9261B3BE}"/>
@@ -96,12 +97,12 @@
     <Version Value="11"/>
     <PathDelim Value="\"/>
     <Target>
-      <Filename Value="prjUASBaspUARTTerminal"/>
+      <Filename Value="bin\$(TargetCPU)-$(TargetOS)\$(BuildMode)\prjUASBaspUARTTerminal"/>
     </Target>
     <SearchPaths>
       <IncludeFiles Value="$(ProjOutDir)"/>
       <OtherUnitFiles Value="..\source"/>
-      <UnitOutputDirectory Value="lib\$(TargetCPU)-$(TargetOS)"/>
+      <UnitOutputDirectory Value="lib\$(TargetCPU)-$(TargetOS)\$(BuildMode)"/>
     </SearchPaths>
     <Parsing>
       <SyntaxOptions>
@@ -129,6 +130,9 @@
         </Win32>
       </Options>
     </Linking>
+    <Other>
+      <CustomOptions Value="-godwarfsets"/>
+    </Other>
   </CompilerOptions>
   <Debugging>
     <Exceptions Count="3">

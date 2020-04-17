@@ -31,8 +31,7 @@ program prjUASBaspUARTTerminal;
 uses {$IFDEF UNIX} {$IFDEF UseCThreads}
   cthreads, {$ENDIF} {$ENDIF}
   Interfaces, // this includes the LCL widgetset
-  Forms,
-  umain;
+  Forms, uusbaspuartterminal;
 
 {$R *.res}
 
