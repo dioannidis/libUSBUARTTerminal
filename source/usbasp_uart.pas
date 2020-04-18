@@ -119,6 +119,9 @@ type
   ppplibusb_device = ^pplibusb_device;
 
 var
+  GlobalContext: plibusb_context;
+  HotPlugCallbackHandle: libusb_hotplug_callback_handle;
+  locResult: integer;
   locDummy: array [0..3] of byte;
 
 function usbasp_devices(var AUSBaspDeviceList: TUSBaspDeviceList): integer;
@@ -159,12 +162,9 @@ var
   USBDeviceDescriptor: libusb_device_descriptor;
   USBDeviceList: ppplibusb_device;
   iResult, i, USBDeviceListCount, USBaspCount: integer;
-  tmpContext: plibusb_context;
   tmpHandle: plibusb_device_handle;
 begin
-  iResult := libusb_init(tmpContext);
-  //libusb_set_debug(AUSBasp.USBContext, 10);
-  USBDeviceListCount := libusb_get_device_list(tmpContext,
+  USBDeviceListCount := libusb_get_device_list(GlobalContext,
     plibusb_device(USBDeviceList));
   try
     for i := 0 to USBDeviceListCount - 1 do
@@ -182,6 +182,16 @@ begin
     libusb_free_device_list(plibusb_device(USBDeviceList), 1);
   end;
   Result := USBaspCount;
+end;
+
+function usbasp_hotplug_callback(AContext: plibusb_context;
+  AHotPlugDevice: plibusb_device; AEvent: libusb_hotplug_event;
+  AUserDat: Pointer): integer;
+begin
+  if AEvent = LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED then
+  ;
+
+  Result := 0;
 end;
 
 function usbasp_open(var AUSBasp: TUSBaspDevice): integer;
@@ -379,6 +389,18 @@ begin
 end;
 
 initialization
+  libusb_init(GlobalContext);
   FillChar(locDummy, SizeOf(locDummy), 0);
+  locResult := libusb_hotplug_register_callback(
+    nil, libusb_hotplug_event(byte(LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED) or
+    byte(LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT)), LIBUSB_HOTPLUG_NO_FLAGS,
+    USBASP_SHARED_VID, USBASP_SHARED_PID, LIBUSB_HOTPLUG_MATCH_ANY,
+    @usbasp_hotplug_callback, nil, HotPlugCallbackHandle)
+
+
+
+finalization;
+  libusb_hotplug_deregister_callback(nil, HotPlugCallbackHandle);
+  libusb_exit(GlobalContext);
 
 end.
