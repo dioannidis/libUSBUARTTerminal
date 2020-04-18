@@ -1,11 +1,11 @@
 object frmMain: TfrmMain
   Left = 694
-  Height = 320
+  Height = 349
   Top = 387
-  Width = 662
+  Width = 785
   Caption = 'Form2'
-  ClientHeight = 300
-  ClientWidth = 662
+  ClientHeight = 329
+  ClientWidth = 785
   Constraints.MinHeight = 320
   Constraints.MinWidth = 662
   DefaultMonitor = dmPrimary
@@ -20,7 +20,7 @@ object frmMain: TfrmMain
   object btnConnect: TButton
     Left = 496
     Height = 31
-    Top = 8
+    Top = 40
     Width = 75
     Caption = 'Connect'
     OnClick = btnConnectClick
@@ -30,13 +30,13 @@ object frmMain: TfrmMain
     Left = 8
     Height = 23
     Top = 80
-    Width = 570
+    Width = 693
     Anchors = [akTop, akLeft, akRight]
     Enabled = False
     TabOrder = 1
   end
   object btnSend: TButton
-    Left = 583
+    Left = 706
     Height = 23
     Top = 80
     Width = 75
@@ -47,9 +47,9 @@ object frmMain: TfrmMain
     TabOrder = 2
   end
   object btnDisconnect: TButton
-    Left = 575
+    Left = 576
     Height = 31
-    Top = 8
+    Top = 40
     Width = 75
     Caption = 'Disconnect'
     Enabled = False
@@ -59,8 +59,8 @@ object frmMain: TfrmMain
   object AppStatusBar: TStatusBar
     Left = 0
     Height = 23
-    Top = 277
-    Width = 662
+    Top = 306
+    Width = 785
     Panels = <>
   end
   object gbNoRuntimeSettings: TGroupBox
@@ -207,9 +207,9 @@ object frmMain: TfrmMain
   end
   object mmDisplay: TMemo
     Left = 0
-    Height = 165
+    Height = 194
     Top = 112
-    Width = 662
+    Width = 785
     Align = alBottom
     Anchors = [akTop, akLeft, akRight, akBottom]
     Color = clBackground
@@ -221,6 +221,22 @@ object frmMain: TfrmMain
     ScrollBars = ssAutoBoth
     TabOrder = 7
     WordWrap = False
+  end
+  object cbxUSBaspDevice: TComboBox
+    Left = 576
+    Height = 23
+    Top = 8
+    Width = 200
+    ItemHeight = 15
+    TabOrder = 8
+  end
+  object lblUSBaspDevice: TLabel
+    Left = 528
+    Height = 15
+    Top = 8
+    Width = 35
+    Caption = 'Device'
+    ParentColor = False
   end
   object AppMainMenu: TMainMenu
     Left = 152
@@ -241,7 +257,7 @@ object frmMain: TfrmMain
     PoweredBy.About.Description.Strings = (
       'Component that shows a Powered By graphic.'#13#10'Use method ShowPoweredByForm in your form.create()'#13#10'to use the component'
     )
-    PoweredBy.About.Title = 'About About PoweredBy component'
+    PoweredBy.About.Title = 'About About About PoweredBy component'
     PoweredBy.About.Height = 280
     PoweredBy.About.Width = 400
     PoweredBy.About.Font.Color = clNavy

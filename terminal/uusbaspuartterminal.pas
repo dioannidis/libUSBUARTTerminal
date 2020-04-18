@@ -47,9 +47,11 @@ type
     cbxLineBreak: TComboBoxEx;
     ckbAutoScroll: TCheckBox;
     ckbTimeStamp: TCheckBox;
+    cbxUSBaspDevice: TComboBox;
     edtSend: TEdit;
     gbNoRuntimeSettings: TGroupBox;
     GroupBox2: TGroupBox;
+    lblUSBaspDevice: TLabel;
     lblBaud: TLabel;
     lblMemoBufferLines: TLabel;
     lblLineBreak: TLabel;
@@ -138,6 +140,8 @@ begin
 end;
 
 procedure TfrmMain.FormCreate(Sender: TObject);
+var
+  i: byte;
 begin
   Caption := Application.Title;
   FUSBasp := TUSBasp.Create();
@@ -146,6 +150,17 @@ begin
     Position := poDesigned;
     DefaultMonitor := dmActiveForm;
   end;
+  FUSBasp.LoadUSBaspDevices;
+  if FUSBasp.USBaspDevices.Count - 1 >= 0 then
+  begin
+    for i := 0 to FUSBasp.USBaspDevices.Count - 1 do
+      cbxUSBaspDevice.AddItem(FUSBasp.USBaspDevices[i]^.ProductName +
+        FUSBasp.USBaspDevices[i]^.SerialNumber, nil);
+  end
+  else
+    cbxUSBaspDevice.AddItem('No USBasp Device Found', nil);
+  cbxUSBaspDevice.ItemIndex := 0;
+
   USBaspUARTAbout.ShowSplash;
 end;
 

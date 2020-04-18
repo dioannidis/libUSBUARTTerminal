@@ -31,7 +31,7 @@ unit uUSBasp;
 interface
 
 uses
-  Classes, SysUtils, Forms, StdCtrls, syncobjs, usbasp_uart2;
+  Classes, SysUtils, Forms, StdCtrls, syncobjs, usbasp_uart;
 
 type
   TLineBreakMode = (lbmNoLineBreak, lbmCR, lbmLF, lbmCRLF);
@@ -41,7 +41,7 @@ type
   TUSBasp = class(TObject)
   private
     FConnected: boolean;
-    FUSBaspHandle: USBaspUART;
+    FUSBaspDevices: TUSBaspDeviceList;
     FBufferSend: array of byte;
     FSendLock: TCriticalSection;
     FLastUsbError: integer;
@@ -68,20 +68,18 @@ type
     destructor Destroy; override;
     function Connect: boolean;
     function Disconnect: boolean;
+    procedure LoadUSBaspDevices;
     property Connected: boolean read FConnected write SetConnected;
     property AutoScroll: boolean read FAutoScroll write SetAutoScroll;
     property TimeStamp: boolean read FTimeStamp write SetTimeStamp;
     property SendBuffer: string write SetSendBuffer;
+    property USBaspDevices: TUSBaspDeviceList read FUSBaspDevices;
   end;
 
 implementation
 
 uses
   libusb;
-
-const
-  USBASP_SHARED_VID = $16C0;
-  USBASP_SHARED_PID = $05DC;
 
 type
   TRawSerialDataMsg = record
@@ -151,7 +149,7 @@ begin
   //  end;
 
   //  // Receive
-  //  RcvLen := usbasp_uart_read(FUSBaspHandle, PChar(@USBaspBuffer[0]), USBaspBufferSize);
+  //  RcvLen := usbasp_read(FUSBaspHandle, PChar(@USBaspBuffer[0]), USBaspBufferSize);
   //  if (RcvLen = 0) then
   //  begin
   //    Sleep(5);
@@ -224,6 +222,12 @@ begin
   finally
     FSendLock.Release;
   end;
+end;
+
+procedure TUSBasp.LoadUSBaspDevices;
+begin
+  usbasp_devices(FUSBaspDevices);
+  FUSBaspDevices.Count;
 end;
 
 procedure TUSBasp.SerialReceivedProcessing(const AMsg: string);
@@ -384,6 +388,7 @@ end;
 
 constructor TUSBasp.Create;
 begin
+  FUSBaspDevices := TUSBaspDeviceList.Create;
   FSendLock := TCriticalSection.Create;
   FConnected := False;
 end;
@@ -392,7 +397,7 @@ destructor TUSBasp.Destroy;
 begin
   Disconnect;
   FSendLock.Free;
-  //FMemo := AMemo;
+  FUSBaspDevices.Free;
   inherited Destroy;
 end;
 
@@ -400,13 +405,13 @@ function TUSBasp.Connect: boolean;
 begin
   if not FConnected then
   begin
-    FLastUsbError := usbasp_uart_open(FUSBaspHandle);
-    if FLastUsbError < 0 then
-    begin
-
-    end
-    else
-      FConnected := True;
+    //FLastUsbError := usbasp_open(FUSBaspHandle);
+    //if FLastUsbError < 0 then
+    //begin
+    //
+    //end
+    //else
+    //  FConnected := True;
   end;
   Result := FConnected;
 end;
@@ -415,13 +420,13 @@ function TUSBasp.Disconnect: boolean;
 begin
   if FConnected then
   begin
-    FLastUsbError := usbasp_uart_disable(FUSBaspHandle);
-    if FLastUsbError < 0 then
-    begin
-
-    end
-    else
-      FConnected := False;
+    //FLastUsbError := usbasp_uart_disable(FUSBaspHandle);
+    //if FLastUsbError < 0 then
+    //begin
+    //
+    //end
+    //else
+    //  FConnected := False;
   end;
   Result := FConnected;
 end;
