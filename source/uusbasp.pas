@@ -41,6 +41,7 @@ type
   TUSBasp = class(TObject)
   private
     FConnected: boolean;
+    FUSBaspDeviceSelectedID: Byte;
     FUSBaspDevices: TUSBaspDeviceList;
     FBufferSend: array of byte;
     FSendLock: TCriticalSection;
@@ -53,6 +54,7 @@ type
     FMemo: TMemo;
     procedure SetAutoScroll(AValue: boolean);
     procedure SetConnected(AValue: boolean);
+    procedure SetSelectedUSBaspDeviceID(AValue: byte);
     procedure SetTimeStamp(AValue: boolean);
     procedure SetSendBuffer(AValue: string);
   protected
@@ -69,6 +71,8 @@ type
     function Connect: boolean;
     function Disconnect: boolean;
     procedure LoadUSBaspDevices;
+    property USBaspID: byte
+      read FUSBaspDeviceSelectedID write SetSelectedUSBaspDeviceID;
     property Connected: boolean read FConnected write SetConnected;
     property AutoScroll: boolean read FAutoScroll write SetAutoScroll;
     property TimeStamp: boolean read FTimeStamp write SetTimeStamp;
@@ -201,6 +205,15 @@ begin
   if FConnected = AValue then
     Exit;
   FConnected := AValue;
+end;
+
+procedure TUSBasp.SetSelectedUSBaspDeviceID(AValue: byte);
+begin
+  if FUSBaspDeviceSelectedID = AValue then
+    Exit;
+  if AValue > FUSBaspDevices.Count - 1 then
+    Exit;
+  FUSBaspDeviceSelectedID := AValue;
 end;
 
 procedure TUSBasp.SetTimeStamp(AValue: boolean);
@@ -390,6 +403,7 @@ constructor TUSBasp.Create;
 begin
   FUSBaspDevices := TUSBaspDeviceList.Create;
   FSendLock := TCriticalSection.Create;
+  FUSBaspDeviceSelectedID := 255;
   FConnected := False;
 end;
 
@@ -403,15 +417,15 @@ end;
 
 function TUSBasp.Connect: boolean;
 begin
-  if not FConnected then
+  if (not FConnected) and (FUSBaspDeviceSelectedID <> 255) then
   begin
-    //FLastUsbError := usbasp_open(FUSBaspHandle);
-    //if FLastUsbError < 0 then
-    //begin
-    //
-    //end
-    //else
-    //  FConnected := True;
+    FLastUsbError := usbasp_open(FUSBaspDevices[FUSBaspDeviceSelectedID]^);
+    if FLastUsbError < 0 then
+    begin
+
+    end
+    else
+      FConnected := True;
   end;
   Result := FConnected;
 end;
@@ -423,7 +437,7 @@ begin
     //FLastUsbError := usbasp_uart_disable(FUSBaspHandle);
     //if FLastUsbError < 0 then
     //begin
-    //
+
     //end
     //else
     //  FConnected := False;

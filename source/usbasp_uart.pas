@@ -57,8 +57,8 @@ type
   //end;
 
   TUSBaspDevice = record
+    USBDevice: plibusb_device;
     Handle: plibusb_device_handle;
-    Context: plibusb_context;
     ProductName: string[255];
     Manufacturer: string[255];
     SerialNumber: string[255];
@@ -79,7 +79,7 @@ type
 
 function usbasp_devices(var AUSBaspDeviceList: TUSBaspDeviceList): integer;
 function usbasp_open(var AUSBasp: TUSBaspDevice): integer;
-function usbasp_close(var AUSBasp: TUSBaspDevice): integer;
+function usbasp_close(const AUSBasp: TUSBaspDevice): integer;
 function usbasp_uart_config(var AUSBasp: TUSBaspDevice; ABaud: integer;
   AFlags: integer): integer;
 function usbasp_uart_read(var AUSBasp: TUSBaspDevice; ABuff: PChar;
@@ -139,21 +139,22 @@ function usbasp_devices(var AUSBaspDeviceList: TUSBaspDeviceList): integer;
     Result := StrTemp;
   end;
 
-  function USBDeviceToUSBaspRecord(AUSBaspHandle: plibusb_device_handle;
+  function USBDeviceToUSBaspRecord(AUSBDevice: plibusb_device;
+    AUSBaspHandle: plibusb_device_handle;
     AUSBDeviceDescriptor: libusb_device_descriptor): PUSBaspDevice;
   var
     tmpUSBaspDevice: PUSBaspDevice;
   begin
     GetMem(tmpUSBaspDevice, SizeOf(TUSBaspDevice));
-    tmpUSBaspDevice^.Handle := AUSBaspHandle;
-    tmpUSBaspDevice^.Context := nil;
-    tmpUSBaspDevice^.HasUart := False;
+    tmpUSBaspDevice^.USBDevice := @AUSBDevice^;
+    tmpUSBaspDevice^.Handle := nil;
     tmpUSBaspDevice^.ProductName :=
       GetDescriptorString(AUSBaspHandle, AUSBDeviceDescriptor.iProduct);
     tmpUSBaspDevice^.Manufacturer :=
       GetDescriptorString(AUSBaspHandle, AUSBDeviceDescriptor.iManufacturer);
     tmpUSBaspDevice^.SerialNumber :=
       GetDescriptorString(AUSBaspHandle, AUSBDeviceDescriptor.iSerialNumber);
+    tmpUSBaspDevice^.HasUart := False;
     Result := tmpUSBaspDevice;
   end;
 
@@ -175,7 +176,9 @@ begin
         (USBDeviceDescriptor.idProduct = USBASP_SHARED_PID) then
       begin
         if libusb_Open(USBDevice, tmpHandle) = 0 then
-          AUSBaspDeviceList.Add(USBDeviceToUSBaspRecord(tmpHandle, USBDeviceDescriptor));
+          AUSBaspDeviceList.Add(USBDeviceToUSBaspRecord(USBDevice,
+            tmpHandle, USBDeviceDescriptor));
+        libusb_close(tmpHandle);
       end;
     end;
   finally
@@ -196,55 +199,23 @@ end;
 
 function usbasp_open(var AUSBasp: TUSBaspDevice): integer;
 var
-  USBDevice: plibusb_device;
-  USBDeviceDescriptor: libusb_device_descriptor;
-  USBDeviceList: ppplibusb_device;
-  iResult, i, USBDeviceListCount: integer;
+  tmpHandle: plibusb_device_handle;
+  tmpDevice: plibusb_device;
 begin
-  //Result := USB_ERROR_NOTFOUND;
-  //AUSBasp.USBHandle := nil;
-  //AUSBasp.USBContext := nil;
-  //iResult := libusb_init(AUSBasp.USBContext);
-  ////libusb_set_debug(AUSBasp.USBContext, 10);
-  //USBDeviceListCount := libusb_get_device_list(AUSBasp.USBContext,
-  //  plibusb_device(USBDeviceList));
-  //try
-  //  for i := 0 to USBDeviceListCount - 1 do
-  //  begin
-  //    USBDevice := @USBDeviceList[i]^;
-  //    libusb_get_device_descriptor(USBDevice, USBDeviceDescriptor);
-  //    if (USBDeviceDescriptor.idVendor = USBASP_SHARED_VID) and
-  //      (USBDeviceDescriptor.idProduct = USBASP_SHARED_PID) then
-  //    begin
-  //      if libusb_Open(USBDevice, AUSBasp.USBHandle) = 0 then
-  //      begin
-  //        if CompareDescriptor(AUSBasp.USBHandle, USBDeviceDescriptor.iProduct,
-  //          'USBasp') then
-  //        begin
-  //          libusb_close(AUSBasp.USBHandle);
-  //          AUSBasp.USBHandle := nil;
-  //          continue;
-  //        end;
-  //        if CompareDescriptor(AUSBasp.USBHandle, USBDeviceDescriptor.iManufacturer,
-  //          'www.fischl.de') then
-  //        begin
-  //          libusb_close(AUSBasp.USBHandle);
-  //          AUSBasp.USBHandle := nil;
-  //          continue;
-  //        end;
-  //        break;
-  //      end;
-  //    end;
-  //  end;
-  //finally
-  //  libusb_free_device_list(plibusb_device(USBDeviceList), 1);
+  Result := libusb_open(AUSBasp.USBDevice, tmpHandle);
+
+  //AUSBasp^.Handle := tmpHandle;
   //  if (libusb_kernel_driver_active(AUSBasp.USBHandle, 0) = 1) then
   //    //find out if kernel driver is attached
   //    libusb_detach_kernel_driver(AUSBasp.USBHandle, 0);//detach it
   //  Result := libusb_claim_interface(AUSBasp.USBHandle, 0);   //claim usb interface
   //end;
-  ////if AUSBasp.USBHandle <> nil then
-  ////  Result := 0;
+end;
+
+function usbasp_close(const AUSBasp: TUSBaspDevice): integer;
+begin
+  libusb_close(AUSBasp.Handle);
+  Result := 0;
 end;
 
 function usbasp_uart_transmit(var AUSBasp: TUSBaspDevice; AReceive: uint8_t;
@@ -284,11 +255,11 @@ var
   Presc, RealBaud, iResult: integer;
   Send: array [0..3] of byte;
 begin
-  if usbasp_open(AUSBasp) <> 0 then
-  begin
-    Result := -1;
-    Exit;
-  end;
+  //if usbasp_open(AUSBasp) <> 0 then
+  //begin
+  //  Result := -1;
+  //  Exit;
+  //end;
 
   Caps := usbasp_uart_capabilities(AUSBasp);
   if (caps and USBASP_CAP_6_UART) = 0 then
@@ -360,13 +331,6 @@ begin
   iResult := libusb_release_interface(AUSBasp.Handle, 0);
 end;
 
-function usbasp_close(var AUSBasp: TUSBaspDevice): integer;
-begin
-  libusb_close(AUSBasp.Handle);
-  libusb_exit(AUSBasp.Context);
-  Result := 0;
-end;
-
 { TUSBaspDeviceList }
 
 function TUSBaspDeviceList.Get(Index: integer): PUSBaspDevice;
@@ -391,16 +355,16 @@ end;
 initialization
   libusb_init(GlobalContext);
   FillChar(locDummy, SizeOf(locDummy), 0);
-  locResult := libusb_hotplug_register_callback(
-    nil, libusb_hotplug_event(byte(LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED) or
-    byte(LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT)), LIBUSB_HOTPLUG_NO_FLAGS,
-    USBASP_SHARED_VID, USBASP_SHARED_PID, LIBUSB_HOTPLUG_MATCH_ANY,
-    @usbasp_hotplug_callback, nil, HotPlugCallbackHandle)
+  //locResult := libusb_hotplug_register_callback(
+  //  GlobalContext, libusb_hotplug_event(byte(LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED) or
+  //  byte(LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT)), LIBUSB_HOTPLUG_NO_FLAGS,
+  //  USBASP_SHARED_VID, USBASP_SHARED_PID, LIBUSB_HOTPLUG_MATCH_ANY,
+  //  @usbasp_hotplug_callback, nil, HotPlugCallbackHandle)
 
 
 
 finalization;
-  libusb_hotplug_deregister_callback(nil, HotPlugCallbackHandle);
+  //libusb_hotplug_deregister_callback(GlobalContext, HotPlugCallbackHandle);
   libusb_exit(GlobalContext);
 
 end.

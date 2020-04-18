@@ -68,6 +68,7 @@ type
     procedure btnConnectClick(Sender: TObject);
     procedure btnSendClick(Sender: TObject);
     procedure btnDisconnectClick(Sender: TObject);
+    procedure cbxUSBaspDeviceChange(Sender: TObject);
     procedure cbxUSBaspDeviceDropDown(Sender: TObject);
     procedure ckbAutoScrollChange(Sender: TObject);
     procedure ckbTimeStampChange(Sender: TObject);
@@ -120,6 +121,12 @@ begin
   FUSBasp.Disconnect;
   FRunning := False;
   ToggleGUI;
+end;
+
+procedure TfrmMain.cbxUSBaspDeviceChange(Sender: TObject);
+begin
+  if FUSBaspFound then
+    FUSBasp.USBaspID := cbxUSBaspDevice.ItemIndex;
 end;
 
 procedure TfrmMain.cbxUSBaspDeviceDropDown(Sender: TObject);
