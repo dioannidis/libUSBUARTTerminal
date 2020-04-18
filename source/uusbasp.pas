@@ -41,7 +41,7 @@ type
   TUSBasp = class(TObject)
   private
     FConnected: boolean;
-    FUSBaspDeviceSelectedID: Byte;
+    FUSBaspDeviceSelectedID: byte;
     FUSBaspDevices: TUSBaspDeviceList;
     FBufferSend: array of byte;
     FSendLock: TCriticalSection;
@@ -71,8 +71,8 @@ type
     function Connect: boolean;
     function Disconnect: boolean;
     procedure LoadUSBaspDevices;
-    property USBaspID: byte
-      read FUSBaspDeviceSelectedID write SetSelectedUSBaspDeviceID;
+    property USBaspID: byte read FUSBaspDeviceSelectedID
+      write SetSelectedUSBaspDeviceID;
     property Connected: boolean read FConnected write SetConnected;
     property AutoScroll: boolean read FAutoScroll write SetAutoScroll;
     property TimeStamp: boolean read FTimeStamp write SetTimeStamp;
@@ -419,7 +419,7 @@ function TUSBasp.Connect: boolean;
 begin
   if (not FConnected) and (FUSBaspDeviceSelectedID <> 255) then
   begin
-    FLastUsbError := usbasp_open(FUSBaspDevices[FUSBaspDeviceSelectedID]^);
+    FLastUsbError := usbasp_open(FUSBaspDevices[FUSBaspDeviceSelectedID]);
     if FLastUsbError < 0 then
     begin
 
@@ -434,13 +434,13 @@ function TUSBasp.Disconnect: boolean;
 begin
   if FConnected then
   begin
-    //FLastUsbError := usbasp_uart_disable(FUSBaspHandle);
-    //if FLastUsbError < 0 then
-    //begin
+    FLastUsbError := usbasp_close(FUSBaspDevices[FUSBaspDeviceSelectedID]);
+    if FLastUsbError < 0 then
+    begin
 
-    //end
-    //else
-    //  FConnected := False;
+    end
+    else
+      FConnected := False;
   end;
   Result := FConnected;
 end;
