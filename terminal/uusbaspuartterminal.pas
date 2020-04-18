@@ -45,12 +45,12 @@ type
     btnDisconnect: TButton;
     cbxBoudRate: TComboBoxEx;
     cbxLineBreak: TComboBoxEx;
+    cbxUSBaspDevice: TComboBox;
     ckbAutoScroll: TCheckBox;
     ckbTimeStamp: TCheckBox;
-    cbxUSBaspDevice: TComboBox;
     edtSend: TEdit;
     gbNoRuntimeSettings: TGroupBox;
-    GroupBox2: TGroupBox;
+    gbRuntimeSettings: TGroupBox;
     lblUSBaspDevice: TLabel;
     lblBaud: TLabel;
     lblMemoBufferLines: TLabel;
@@ -68,6 +68,7 @@ type
     procedure btnConnectClick(Sender: TObject);
     procedure btnSendClick(Sender: TObject);
     procedure btnDisconnectClick(Sender: TObject);
+    procedure cbxUSBaspDeviceDropDown(Sender: TObject);
     procedure ckbAutoScrollChange(Sender: TObject);
     procedure ckbTimeStampChange(Sender: TObject);
     procedure FormCreate(Sender: TObject);
@@ -79,7 +80,9 @@ type
     procedure miAboutClick(Sender: TObject);
   private
     FUSBasp: TUSBasp;
-    procedure ToggleGUI(ARunning: boolean);
+    FUSBaspFound: boolean;
+    FRunning: boolean;
+    procedure ToggleGUI;
     procedure USBaspTerminated(Sender: TObject);
   public
 
@@ -108,13 +111,41 @@ begin
   //FUSBasp.FreeOnTerminate := True;
   //FUSBasp.Start;
   FUSBasp.Connect;
-  ToggleGUI(True);
+  FRunning := True;
+  ToggleGUI;
 end;
 
 procedure TfrmMain.btnDisconnectClick(Sender: TObject);
 begin
   FUSBasp.Disconnect;
-  ToggleGUI(False);
+  FRunning := False;
+  ToggleGUI;
+end;
+
+procedure TfrmMain.cbxUSBaspDeviceDropDown(Sender: TObject);
+var
+  i: byte;
+begin
+  FUSBaspFound := False;
+  cbxUSBaspDevice.Items.BeginUpdate;
+  FUSBasp.LoadUSBaspDevices;
+  if FUSBasp.USBaspDevices.Count - 1 >= 0 then
+  begin
+    cbxUSBaspDevice.Clear;
+    for i := 0 to FUSBasp.USBaspDevices.Count - 1 do
+      cbxUSBaspDevice.AddItem(FUSBasp.USBaspDevices[i]^.ProductName +
+        ':' + FUSBasp.USBaspDevices[i]^.SerialNumber + ' [' +
+        FUSBasp.USBaspDevices[i]^.Manufacturer + ']', nil);
+    FUSBaspFound := True;
+  end
+  else
+  begin
+    cbxUSBaspDevice.Clear;
+    cbxUSBaspDevice.AddItem('No USBasp Device Found', nil);
+  end;
+  cbxUSBaspDevice.ItemIndex := 0;
+  cbxUSBaspDevice.Items.EndUpdate;
+  ToggleGUI;
 end;
 
 procedure TfrmMain.btnClearMemoClick(Sender: TObject);
@@ -140,28 +171,18 @@ begin
 end;
 
 procedure TfrmMain.FormCreate(Sender: TObject);
-var
-  i: byte;
 begin
   Caption := Application.Title;
   FUSBasp := TUSBasp.Create();
+  FUSBaspFound := False;
+  FRunning := False;
   if FileExists(ChangeFileExt(Application.ExeName, '.xml')) then
   begin
     Position := poDesigned;
     DefaultMonitor := dmActiveForm;
   end;
-  FUSBasp.LoadUSBaspDevices;
-  if FUSBasp.USBaspDevices.Count - 1 >= 0 then
-  begin
-    for i := 0 to FUSBasp.USBaspDevices.Count - 1 do
-      cbxUSBaspDevice.AddItem(FUSBasp.USBaspDevices[i]^.ProductName +
-        FUSBasp.USBaspDevices[i]^.SerialNumber, nil);
-  end
-  else
-    cbxUSBaspDevice.AddItem('No USBasp Device Found', nil);
-  cbxUSBaspDevice.ItemIndex := 0;
-
   USBaspUARTAbout.ShowSplash;
+  ToggleGUI;
 end;
 
 procedure TfrmMain.FormDestroy(Sender: TObject);
@@ -202,32 +223,31 @@ begin
   USBaspUARTAbout.ShowAbout;
 end;
 
-procedure TfrmMain.ToggleGUI(ARunning: boolean);
+procedure TfrmMain.ToggleGUI;
+var
+  bConnected: boolean;
 begin
-  if ARunning then
-  begin
-    btnConnect.Enabled := False;
-    gbNoRuntimeSettings.Enabled := False;
-    btnDisconnect.Enabled := True;
-    edtSend.Enabled := True;
-    btnSend.Enabled := True;
-    edtSend.SetFocus;
-  end
-  else
-  begin
-    btnConnect.Enabled := True;
-    gbNoRuntimeSettings.Enabled := True;
-    btnDisconnect.Enabled := False;
-    edtSend.Enabled := False;
-    btnSend.Enabled := False;
-    btnConnect.SetFocus;
-  end;
+  bConnected := FRunning and FUSBaspFound;
+
+  btnConnect.Enabled := (not FRunning) and FUSBaspFound;
+  btnDisconnect.Enabled := bConnected;
+  gbRuntimeSettings.Enabled := FUSBaspFound;
+  gbNoRuntimeSettings.Enabled := (not FRunning) and FUSBaspFound;
+  edtSend.Enabled := bConnected;
+  btnSend.Enabled := bConnected;
+
+  if edtSend.Enabled or btnConnect.Enabled then
+    if bConnected then
+      edtSend.SetFocus
+    else
+      btnConnect.SetFocus;
 end;
 
 procedure TfrmMain.USBaspTerminated(Sender: TObject);
 begin
   FUSBasp := nil;
-  ToggleGUI(False);
+  FRunning := False;
+  ToggleGUI;
 end;
 
 end.

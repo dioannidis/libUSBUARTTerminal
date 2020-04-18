@@ -21,7 +21,7 @@
       <UseVersionInfo Value="True"/>
       <AutoIncrementBuild Value="True"/>
       <MinorVersionNr Value="3"/>
-      <BuildNr Value="8"/>
+      <BuildNr Value="9"/>
       <StringTable FileDescription="USBasp UART Terminal" InternalName="prjUSBaspUARTTerminal" LegalCopyright="© 2020 Dimitrios Chr. Ioannidis" LegalTrademarks="© 2020 Dimitrios Chr. Ioannidis" OriginalFilename="prjUSBaspUARTTerminal.exe" ProductName="USBasp UART Terminal" ProductVersion="0.0"/>
     </VersionInfo>
     <BuildModes Count="2">

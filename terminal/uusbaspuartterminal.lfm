@@ -52,7 +52,6 @@ object frmMain: TfrmMain
     Top = 40
     Width = 75
     Caption = 'Disconnect'
-    Enabled = False
     OnClick = btnDisconnectClick
     TabOrder = 3
   end
@@ -70,6 +69,7 @@ object frmMain: TfrmMain
     Width = 272
     ClientHeight = 53
     ClientWidth = 268
+    Enabled = False
     TabOrder = 5
     object lblLineBreak: TLabel
       Left = 8
@@ -145,7 +145,7 @@ object frmMain: TfrmMain
       ParentColor = False
     end
     object medtMemoBufferLines: TMaskEdit
-      Left = 194
+      Left = 192
       Height = 23
       Top = 17
       Width = 62
@@ -167,13 +167,14 @@ object frmMain: TfrmMain
       ParentColor = False
     end
   end
-  object GroupBox2: TGroupBox
+  object gbRuntimeSettings: TGroupBox
     Left = 288
     Height = 73
     Top = 0
     Width = 200
     ClientHeight = 53
     ClientWidth = 196
+    Enabled = False
     TabOrder = 6
     object ckbAutoScroll: TCheckBox
       Left = 16
@@ -186,15 +187,6 @@ object frmMain: TfrmMain
       State = cbChecked
       TabOrder = 0
     end
-    object btnClearMemo: TButton
-      Left = 112
-      Height = 23
-      Top = 24
-      Width = 75
-      Caption = 'Clear'
-      OnClick = btnClearMemoClick
-      TabOrder = 1
-    end
     object ckbTimeStamp: TCheckBox
       Left = 16
       Height = 19
@@ -202,6 +194,15 @@ object frmMain: TfrmMain
       Width = 81
       Caption = 'TimeStamp'
       OnChange = ckbTimeStampChange
+      TabOrder = 1
+    end
+    object btnClearMemo: TButton
+      Left = 112
+      Height = 23
+      Top = 24
+      Width = 75
+      Caption = 'Clear'
+      OnClick = btnClearMemoClick
       TabOrder = 2
     end
   end
@@ -228,7 +229,9 @@ object frmMain: TfrmMain
     Top = 8
     Width = 200
     ItemHeight = 15
+    OnDropDown = cbxUSBaspDeviceDropDown
     TabOrder = 8
+    Text = 'Select USBasp Device'
   end
   object lblUSBaspDevice: TLabel
     Left = 528
