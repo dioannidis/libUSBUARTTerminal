@@ -127,7 +127,10 @@ procedure TfrmMain.cbxUSBaspDeviceDropDown(Sender: TObject);
 var
   i: byte;
 begin
+  if FUSBasp.Connected then
+    Exit;
   FUSBaspFound := False;
+  FRunning := False;
   cbxUSBaspDevice.Items.BeginUpdate;
   cbxUSBaspDevice.Items.Clear;
   FUSBasp.LoadUSBaspDevices;
@@ -228,6 +231,7 @@ var
 begin
   bConnected := FRunning and FUSBaspFound;
 
+  cbxUSBaspDevice.Enabled := not bConnected;
   btnConnect.Enabled := (not FRunning) and FUSBaspFound;
   btnDisconnect.Enabled := bConnected;
   gbRuntimeSettings.Enabled := FUSBaspFound and FUSBasp.SupportUART;

@@ -53,6 +53,7 @@ type
     FTimeStamp: boolean;
     FLastCharReceived: char;
     FMemo: TMemo;
+    function GetUSBaspDevice: TUSBaspDevice;
     procedure SetAutoScroll(AValue: boolean);
     procedure SetConnected(AValue: boolean);
     procedure SetSelectedUSBaspDeviceID(AValue: byte);
@@ -79,6 +80,7 @@ type
     property TimeStamp: boolean read FTimeStamp write SetTimeStamp;
     property SendBuffer: string write SetSendBuffer;
     property SupportUART: boolean read FSupportUART;
+    property USBaspDevice: TUSBaspDevice read GetUSBaspDevice;
     property USBaspDevices: TUSBaspDeviceList read FUSBaspDevices;
   end;
 
@@ -202,6 +204,11 @@ begin
   FAutoScroll := AValue;
 end;
 
+function TUSBasp.GetUSBaspDevice: TUSBaspDevice;
+begin
+  result := FUSBaspDevices[FUSBaspDeviceSelectedID]^;
+end;
+
 procedure TUSBasp.SetConnected(AValue: boolean);
 begin
   if FConnected = AValue then
@@ -215,6 +222,8 @@ begin
     Exit;
   if AValue > FUSBaspDevices.Count - 1 then
     Exit;
+  if FConnected then
+    Disconnect;
   FUSBaspDeviceSelectedID := AValue;
   FSupportUART:= FUSBaspDevices[FUSBaspDeviceSelectedID]^.HasUart;
 end;
@@ -404,6 +413,7 @@ end;
 
 constructor TUSBasp.Create;
 begin
+  usbasp_initialization;
   FUSBaspDevices := TUSBaspDeviceList.Create;
   FSendLock := TCriticalSection.Create;
   FUSBaspDeviceSelectedID := 255;
@@ -415,6 +425,7 @@ begin
   Disconnect;
   FSendLock.Free;
   FUSBaspDevices.Free;
+  usbasp_finalization;
   inherited Destroy;
 end;
 
@@ -428,10 +439,7 @@ begin
 
     end
     else
-    begin
-      FSupportUART := FUSBaspDevices[FUSBaspDeviceSelectedID]^.HasUart;
       FConnected := True;
-    end;
   end;
   Result := FConnected;
 end;
@@ -446,7 +454,6 @@ begin
 
     end
     else
-      FSupportUART := False;
       FConnected := False;
   end;
   Result := FConnected;

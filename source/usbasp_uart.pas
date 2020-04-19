@@ -77,6 +77,8 @@ type
   end;
 
 function usbasp_devices(var AUSBaspDeviceList: TUSBaspDeviceList): integer;
+function usbasp_initialization: integer;
+function usbasp_finalization: integer;
 function usbasp_open(const AUSBasp: PUSBaspDevice): integer;
 function usbasp_close(const AUSBasp: PUSBaspDevice): integer;
 function usbasp_uart_config(const AUSBasp: PUSBaspDevice; ABaud: integer;
@@ -148,6 +150,19 @@ begin
       (Ord(Res[3]) shl 24);
 end;
 
+function usbasp_initialization: integer;
+begin
+  FillChar(locDummy, SizeOf(locDummy), 0);
+  libusb_init(GlobalContext);
+  USBDeviceList := nil;
+end;
+
+function usbasp_finalization: integer;
+begin
+  libusb_free_device_list(plibusb_device(USBDeviceList), 1);
+  libusb_exit(GlobalContext);
+end;
+
 function usbasp_open(const AUSBasp: PUSBaspDevice): integer;
 begin
   Result := libusb_open(AUSBasp^.USBDevice, AUSBasp^.Handle);
@@ -202,6 +217,7 @@ function usbasp_devices(var AUSBaspDeviceList: TUSBaspDeviceList): integer;
       GetDescriptorString(AUSBaspHandle, AUSBDeviceDescriptor.iSerialNumber);
 
     tmpUSBaspDevice^.Handle := AUSBaspHandle;
+    tmpUSBaspDevice^.HasUart := false;
     Caps := usbasp_uart_capabilities(tmpUSBaspDevice);
     if (caps and USBASP_CAP_6_UART) = USBASP_CAP_6_UART then
       tmpUSBaspDevice^.HasUart := True;
@@ -217,11 +233,10 @@ var
   tmpHandle: plibusb_device_handle;
 begin
   AUSBaspDeviceList.Clear;
-  libusb_free_device_list(plibusb_device(USBDeviceList), 1);
-  USBDeviceList := nil;
+  if USBDeviceList <> nil then
+    libusb_free_device_list(plibusb_device(USBDeviceList), 1);
   USBDeviceListCount := libusb_get_device_list(GlobalContext,
     plibusb_device(USBDeviceList));
-
   for i := 0 to USBDeviceListCount - 1 do
   begin
     USBDevice := @USBDeviceList[i]^;
@@ -235,6 +250,7 @@ begin
       libusb_close(tmpHandle);
     end;
   end;
+
   Result := AUSBaspDeviceList.Count;
 end;
 
@@ -353,21 +369,11 @@ begin
 end;
 
 initialization
-  libusb_init(GlobalContext);
-  USBDeviceListCount := libusb_get_device_list(GlobalContext,
-    plibusb_device(USBDeviceList));
-  FillChar(locDummy, SizeOf(locDummy), 0);
   //locResult := libusb_hotplug_register_callback(
   //  GlobalContext, libusb_hotplug_event(byte(LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED) or
   //  byte(LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT)), LIBUSB_HOTPLUG_NO_FLAGS,
   //  USBASP_SHARED_VID, USBASP_SHARED_PID, LIBUSB_HOTPLUG_MATCH_ANY,
   //  @usbasp_hotplug_callback, nil, HotPlugCallbackHandle)
 
-
-
-finalization;
-  //libusb_hotplug_deregister_callback(GlobalContext, HotPlugCallbackHandle);
-  libusb_free_device_list(plibusb_device(USBDeviceList), 1);
-  libusb_exit(GlobalContext);
 
 end.
