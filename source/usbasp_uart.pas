@@ -51,10 +51,8 @@ const
   USBASP_UART_BYTES_9B = %100000;
 
 type
-  //USBaspUART = record
-  //  USBHandle: plibusb_device_handle;
-  //  USBContext: plibusb_context;
-  //end;
+
+  { TUSBaspDevice }
 
   TUSBaspDevice = record
     USBDevice: plibusb_device;
@@ -127,6 +125,51 @@ var
   locResult: integer;
   locDummy: array [0..3] of byte;
 
+function usbasp_uart_transmit(const AUSBasp: PUSBaspDevice; AReceive: uint8_t;
+  AFunctionId: uint8_t; ASend: array of byte; ABuffer: PChar;
+  ABufferSize: uint16_t): integer;
+begin
+  Result := libusb_control_transfer(AUSBasp^.Handle,
+    (byte(LIBUSB_REQUEST_TYPE_VENDOR) or byte(LIBUSB_RECIPIENT_DEVICE) or
+    (AReceive shl 7)) and $FF, AFunctionId, ((ASend[1] shl 8) or ASend[0]),
+    ((ASend[3] shl 8) or ASend[2]), @ABuffer[0], ABufferSize, 5000);
+end;
+
+function usbasp_uart_capabilities(const AUSBasp: PUSBaspDevice): uint32_t;
+var
+  Res: array [0..3] of uint8_t;
+  iResult: integer;
+begin
+  Result := 0;
+  iResult := usbasp_uart_transmit(AUSBasp, 1, USBASP_FUNC_GETCAPABILITIES,
+    locDummy, PChar(@Res[0]), length(Res));
+  if iResult = 4 then
+    Result := Res[0] or (uint32_t(Res[1]) shl 8) or (uint32_t(Res[2]) shl 16) or
+      (Ord(Res[3]) shl 24);
+end;
+
+function usbasp_open(const AUSBasp: PUSBaspDevice): integer;
+begin
+  Result := libusb_open(AUSBasp^.USBDevice, AUSBasp^.Handle);
+  //find out if kernel driver is attached
+  if (libusb_kernel_driver_active(AUSBasp^.Handle, 0) = 1) then
+    libusb_detach_kernel_driver(AUSBasp^.Handle, 0);//detach it
+  //claim usb interface
+  if libusb_claim_interface(AUSBasp^.Handle, 0) = 0 then
+    AUSBasp^.Interface0Claimed := True;
+end;
+
+function usbasp_close(const AUSBasp: PUSBaspDevice): integer;
+begin
+  Result := 0;
+  if AUSBasp^.Interface0Claimed then
+    Result := libusb_release_interface(AUSBasp^.Handle, 0);
+  libusb_close(AUSBasp^.Handle);
+  AUSBasp^.Handle := nil;
+  AUSBasp^.HasUart := False;
+  AUSBasp^.Interface0Claimed := False;
+end;
+
 function usbasp_devices(var AUSBaspDeviceList: TUSBaspDeviceList): integer;
 
   function GetDescriptorString(AUSBHandle: plibusb_device_handle;
@@ -147,17 +190,23 @@ function usbasp_devices(var AUSBaspDeviceList: TUSBaspDeviceList): integer;
     AUSBDeviceDescriptor: libusb_device_descriptor): PUSBaspDevice;
   var
     tmpUSBaspDevice: PUSBaspDevice;
+    Caps: uint32_t;
   begin
     GetMem(tmpUSBaspDevice, SizeOf(TUSBaspDevice));
-    tmpUSBaspDevice^.USBDevice := @AUSBDevice^;
-    tmpUSBaspDevice^.Handle := nil;
+    tmpUSBaspDevice^.USBDevice := AUSBDevice;
     tmpUSBaspDevice^.ProductName :=
       GetDescriptorString(AUSBaspHandle, AUSBDeviceDescriptor.iProduct);
     tmpUSBaspDevice^.Manufacturer :=
       GetDescriptorString(AUSBaspHandle, AUSBDeviceDescriptor.iManufacturer);
     tmpUSBaspDevice^.SerialNumber :=
       GetDescriptorString(AUSBaspHandle, AUSBDeviceDescriptor.iSerialNumber);
-    tmpUSBaspDevice^.HasUart := False;
+
+    tmpUSBaspDevice^.Handle := AUSBaspHandle;
+    Caps := usbasp_uart_capabilities(tmpUSBaspDevice);
+    if (caps and USBASP_CAP_6_UART) = USBASP_CAP_6_UART then
+      tmpUSBaspDevice^.HasUart := True;
+    tmpUSBaspDevice^.Handle := nil;
+
     Result := tmpUSBaspDevice;
   end;
 
@@ -167,23 +216,26 @@ var
   iResult, i, USBaspCount: integer;
   tmpHandle: plibusb_device_handle;
 begin
-  try
-    for i := 0 to USBDeviceListCount - 1 do
+  AUSBaspDeviceList.Clear;
+  libusb_free_device_list(plibusb_device(USBDeviceList), 1);
+  USBDeviceList := nil;
+  USBDeviceListCount := libusb_get_device_list(GlobalContext,
+    plibusb_device(USBDeviceList));
+
+  for i := 0 to USBDeviceListCount - 1 do
+  begin
+    USBDevice := @USBDeviceList[i]^;
+    libusb_get_device_descriptor(USBDevice, USBDeviceDescriptor);
+    if (USBDeviceDescriptor.idVendor = USBASP_SHARED_VID) and
+      (USBDeviceDescriptor.idProduct = USBASP_SHARED_PID) then
     begin
-      USBDevice := @USBDeviceList[i]^;
-      libusb_get_device_descriptor(USBDevice, USBDeviceDescriptor);
-      if (USBDeviceDescriptor.idVendor = USBASP_SHARED_VID) and
-        (USBDeviceDescriptor.idProduct = USBASP_SHARED_PID) then
-      begin
-        if libusb_Open(USBDevice, tmpHandle) = 0 then
-          AUSBaspDeviceList.Add(USBDeviceToUSBaspRecord(USBDevice,
-            tmpHandle, USBDeviceDescriptor));
-        libusb_close(tmpHandle);
-      end;
+      if libusb_Open(USBDevice, tmpHandle) = 0 then
+        AUSBaspDeviceList.Add(USBDeviceToUSBaspRecord(USBDevice,
+          tmpHandle, USBDeviceDescriptor));
+      libusb_close(tmpHandle);
     end;
-  finally
   end;
-  Result := USBaspCount;
+  Result := AUSBaspDeviceList.Count;
 end;
 
 function usbasp_hotplug_callback(AContext: plibusb_context;
@@ -194,63 +246,6 @@ begin
   ;
 
   Result := 0;
-end;
-
-function usbasp_uart_transmit(const AUSBasp: PUSBaspDevice; AReceive: uint8_t;
-  AFunctionId: uint8_t; ASend: array of byte; ABuffer: PChar;
-  ABufferSize: uint16_t): integer;
-var
-  locResult: integer;
-begin
-  locResult := libusb_control_transfer(AUSBasp^.Handle,
-    (byte(LIBUSB_REQUEST_TYPE_VENDOR) or byte(LIBUSB_RECIPIENT_DEVICE) or
-    (AReceive shl 7)) and $FF,
-    //($40 or (AReceive shl 7)) and $FF,
-    //AReceive,
-    AFunctionId, ((ASend[1] shl 8) or ASend[0]), ((ASend[3] shl 8) or ASend[2]),
-    @ABuffer[0], ABufferSize, 5000);
-  Result := locResult;
-end;
-
-function usbasp_uart_capabilities(const AUSBasp: PUSBaspDevice): uint32_t;
-var
-  Res: array [0..3] of uint8_t;
-  iResult: integer;
-begin
-  Result := 0;
-  iResult := usbasp_uart_transmit(AUSBasp, 1, USBASP_FUNC_GETCAPABILITIES,
-    locDummy, PChar(@Res[0]), length(Res));
-  if iResult = 4 then
-    Result := Res[0] or (uint32_t(Res[1]) shl 8) or (uint32_t(Res[2]) shl 16) or
-      (Ord(Res[3]) shl 24);
-end;
-
-function usbasp_open(const AUSBasp: PUSBaspDevice): integer;
-var
-  Caps: uint32_t;
-begin
-  Result := libusb_open(AUSBasp^.USBDevice, AUSBasp^.Handle);
-  //find out if kernel driver is attached
-  if (libusb_kernel_driver_active(AUSBasp^.Handle, 0) = 1) then
-    libusb_detach_kernel_driver(AUSBasp^.Handle, 0);//detach it
-  //claim usb interface
-  if libusb_claim_interface(AUSBasp^.Handle, 0) = 0 then
-    AUSBasp^.Interface0Claimed := True;
-
-  Caps := usbasp_uart_capabilities(AUSBasp);
-  if (caps and USBASP_CAP_6_UART) = 0 then
-    AUSBasp^.HasUart := True;
-end;
-
-function usbasp_close(const AUSBasp: PUSBaspDevice): integer;
-begin
-  Result := 0;
-  if AUSBasp^.Interface0Claimed then
-    Result := libusb_release_interface(AUSBasp^.Handle, 0);
-  libusb_close(AUSBasp^.Handle);
-  AUSBasp^.Handle := nil;
-  AUSBasp^.HasUart := False;
-  AUSBasp^.Interface0Claimed := False;
 end;
 
 function usbasp_uart_config(const AUSBasp: PUSBaspDevice; ABaud: integer;

@@ -41,6 +41,7 @@ type
   TUSBasp = class(TObject)
   private
     FConnected: boolean;
+    FSupportUART: boolean;
     FUSBaspDeviceSelectedID: byte;
     FUSBaspDevices: TUSBaspDeviceList;
     FBufferSend: array of byte;
@@ -77,6 +78,7 @@ type
     property AutoScroll: boolean read FAutoScroll write SetAutoScroll;
     property TimeStamp: boolean read FTimeStamp write SetTimeStamp;
     property SendBuffer: string write SetSendBuffer;
+    property SupportUART: boolean read FSupportUART;
     property USBaspDevices: TUSBaspDeviceList read FUSBaspDevices;
   end;
 
@@ -214,6 +216,7 @@ begin
   if AValue > FUSBaspDevices.Count - 1 then
     Exit;
   FUSBaspDeviceSelectedID := AValue;
+  FSupportUART:= FUSBaspDevices[FUSBaspDeviceSelectedID]^.HasUart;
 end;
 
 procedure TUSBasp.SetTimeStamp(AValue: boolean);
@@ -425,7 +428,10 @@ begin
 
     end
     else
+    begin
+      FSupportUART := FUSBaspDevices[FUSBaspDeviceSelectedID]^.HasUart;
       FConnected := True;
+    end;
   end;
   Result := FConnected;
 end;
@@ -440,6 +446,7 @@ begin
 
     end
     else
+      FSupportUART := False;
       FConnected := False;
   end;
   Result := FConnected;
