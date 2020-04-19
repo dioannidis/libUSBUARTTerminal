@@ -68,7 +68,7 @@ type
     procedure btnConnectClick(Sender: TObject);
     procedure btnSendClick(Sender: TObject);
     procedure btnDisconnectClick(Sender: TObject);
-    procedure cbxUSBaspDeviceChange(Sender: TObject);
+    procedure cbxUSBaspDeviceCloseUp(Sender: TObject);
     procedure cbxUSBaspDeviceDropDown(Sender: TObject);
     procedure ckbAutoScrollChange(Sender: TObject);
     procedure ckbTimeStampChange(Sender: TObject);
@@ -105,12 +105,6 @@ const
 
 procedure TfrmMain.btnConnectClick(Sender: TObject);
 begin
-  //FUSBasp := TUSBasp.Create(BaudInt[cbxBoudRate.ItemIndex + 3],
-  //  mmDisplay, TLineBreakMode(cbxLineBreak.ItemIndex), ckbAutoScroll.State =
-  //  cbChecked, ckbTimeStamp.State = cbChecked);
-  //FUSBasp.OnTerminate := @USBaspTerminated;
-  //FUSBasp.FreeOnTerminate := True;
-  //FUSBasp.Start;
   FUSBasp.Connect;
   FRunning := True;
   ToggleGUI;
@@ -123,10 +117,10 @@ begin
   ToggleGUI;
 end;
 
-procedure TfrmMain.cbxUSBaspDeviceChange(Sender: TObject);
+procedure TfrmMain.cbxUSBaspDeviceCloseUp(Sender: TObject);
 begin
-  if FUSBaspFound then
-    FUSBasp.USBaspID := cbxUSBaspDevice.ItemIndex;
+  FUSBasp.USBaspID := cbxUSBaspDevice.ItemIndex;
+  ToggleGUI;
 end;
 
 procedure TfrmMain.cbxUSBaspDeviceDropDown(Sender: TObject);
@@ -135,10 +129,10 @@ var
 begin
   FUSBaspFound := False;
   cbxUSBaspDevice.Items.BeginUpdate;
+  cbxUSBaspDevice.Items.Clear;
   FUSBasp.LoadUSBaspDevices;
   if FUSBasp.USBaspDevices.Count - 1 >= 0 then
   begin
-    cbxUSBaspDevice.Clear;
     for i := 0 to FUSBasp.USBaspDevices.Count - 1 do
       cbxUSBaspDevice.AddItem(FUSBasp.USBaspDevices[i]^.ProductName +
         ':' + FUSBasp.USBaspDevices[i]^.SerialNumber + ' [' +
@@ -147,12 +141,10 @@ begin
   end
   else
   begin
-    cbxUSBaspDevice.Clear;
     cbxUSBaspDevice.AddItem('No USBasp Device Found', nil);
   end;
   cbxUSBaspDevice.ItemIndex := 0;
   cbxUSBaspDevice.Items.EndUpdate;
-  ToggleGUI;
 end;
 
 procedure TfrmMain.btnClearMemoClick(Sender: TObject);
@@ -238,12 +230,12 @@ begin
 
   btnConnect.Enabled := (not FRunning) and FUSBaspFound;
   btnDisconnect.Enabled := bConnected;
-  gbRuntimeSettings.Enabled := FUSBaspFound;
-  gbNoRuntimeSettings.Enabled := (not FRunning) and FUSBaspFound;
-  edtSend.Enabled := bConnected;
-  btnSend.Enabled := bConnected;
+  gbRuntimeSettings.Enabled := FUSBaspFound and FUSBasp.SupportUART;
+  gbNoRuntimeSettings.Enabled := (not FRunning) and FUSBaspFound and FUSBasp.SupportUART;
+  edtSend.Enabled := bConnected and FUSBasp.SupportUART;
+  btnSend.Enabled := bConnected and FUSBasp.SupportUART;
 
-  if edtSend.Enabled or btnConnect.Enabled then
+  if FUSBasp.SupportUART and (edtSend.Enabled or btnConnect.Enabled) then
     if bConnected then
       edtSend.SetFocus
     else
