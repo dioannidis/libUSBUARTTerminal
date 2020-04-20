@@ -1,7 +1,7 @@
 object frmMain: TfrmMain
-  Left = 574
+  Left = 330
   Height = 381
-  Top = 316
+  Top = 148
   Width = 785
   Caption = 'Form2'
   ClientHeight = 361
@@ -15,7 +15,7 @@ object frmMain: TfrmMain
   OnDestroy = FormDestroy
   OnKeyPress = FormKeyPress
   Position = poScreenCenter
-  SessionProperties = 'cbxBoudRate.ItemIndex;Height;Left;Top;Width;ckbAutoScroll.Checked;ckbTimeStamp.Checked;cbxLineBreak.ItemIndex;medtMemoBufferLines.Text'
+  SessionProperties = 'cbxLineBreak.ItemIndex;ckbAutoScroll.Checked;ckbTimeStamp.Checked;Height;Left;medtMemoBufferLines.Text;Top;Width;cbxBaudRate.ItemIndex'
   LCLVersion = '2.1.0.0'
   object edtSend: TEdit
     Left = 8
@@ -239,7 +239,7 @@ object frmMain: TfrmMain
         Left = 16
         Height = 19
         Top = 28
-        Width = 81
+        Width = 80
         Caption = 'TimeStamp'
         TabOrder = 1
       end
@@ -309,7 +309,7 @@ object frmMain: TfrmMain
     PoweredBy.About.Description.Strings = (
       'Component that shows a Powered By graphic.'#13#10'Use method ShowPoweredByForm in your form.create()'#13#10'to use the component'
     )
-    PoweredBy.About.Title = 'About About About About About About About About About About PoweredBy component'
+    PoweredBy.About.Title = 'About About About About About About About About About About About PoweredBy component'
     PoweredBy.About.Height = 280
     PoweredBy.About.Width = 400
     PoweredBy.About.Font.Color = clNavy
@@ -336,6 +336,6 @@ object frmMain: TfrmMain
   object AppXMLPropStorage: TXMLPropStorage
     StoredValues = <>
     Left = 264
-    Top = 120
+    Top = 122
   end
 end

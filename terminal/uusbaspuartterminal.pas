@@ -138,7 +138,8 @@ end;
 
 procedure TfrmMain.cbxUSBaspDeviceCloseUp(Sender: TObject);
 begin
-  FUSBasp.USBaspID := cbxUSBaspDevice.ItemIndex;
+  if FUSBasp.USBaspDevices.Count - 1 >= 0 then
+    FUSBasp.USBaspID := cbxUSBaspDevice.ItemIndex;
   ToggleGUI;
 end;
 
@@ -157,12 +158,13 @@ begin
       cbxUSBaspDevice.AddItem(FUSBasp.USBaspDevices[i]^.ProductName +
         ':' + FUSBasp.USBaspDevices[i]^.SerialNumber + ' [' +
         FUSBasp.USBaspDevices[i]^.Manufacturer + ']', nil);
+    cbxUSBaspDevice.ItemIndex := 0;
   end
   else
   begin
     cbxUSBaspDevice.AddItem('No USBasp Device Found', nil);
+    cbxUSBaspDevice.ItemIndex := -1;
   end;
-  cbxUSBaspDevice.ItemIndex := 0;
   cbxUSBaspDevice.Items.EndUpdate;
 end;
 
@@ -174,6 +176,7 @@ end;
 procedure TfrmMain.btnSendClick(Sender: TObject);
 begin
   FUSBasp.SendBuffer := edtSend.Text;
+  edtSend.Text := '';
 end;
 
 procedure TfrmMain.FormCreate(Sender: TObject);

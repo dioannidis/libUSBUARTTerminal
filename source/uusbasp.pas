@@ -57,13 +57,13 @@ type
     FUSBaspID: byte;
     FUSBaspDevices: TUSBaspDeviceList;
     FBufferSend: array of byte;
-    FSendLock: TCriticalSection;
+    FBufferReady: boolean;
     FLastUsbError: integer;
     FThreadReceive, FThreadSend: TThread;
     function GetUSBaspDevice: TUSBaspDevice;
     procedure SetConnected(AValue: boolean);
     procedure SetOnUARTReceive(AValue: TUARTReceive);
-    procedure SetSendBuffer(AValue: string);
+    procedure SetSendBuffer(const AValue: string);
     procedure SetUSBaspID(AValue: byte);
   protected
     FOnUARTReceive: TUARTReceive;
@@ -94,6 +94,9 @@ implementation
 
 uses
   libusb;
+
+var
+  SendLock: TCriticalSection;
 
 type
   { TUSBaspReceiveThread }
@@ -186,27 +189,27 @@ begin
   while not terminated do
   begin
     // Send
-    FUSBasp.FSendLock.Acquire;
+    SendLock.Acquire;
     try
-      if Assigned(FUSBasp.FBufferSend) then
+      if FUSBasp.FBufferReady then
       begin
         while RcvLen < Length(FUSBasp.FBufferSend) do
         begin
           RcvLen := usbasp_uart_write(FUSBasp.FUSBaspDevices[FUSBasp.FUSBaspID],
             PChar(@FUSBasp.FBufferSend[0]), Length(FUSBasp.FBufferSend));
+          if RcvLen < 0 then
+          begin
+            if Assigned(FUSBasp.FOnUARTReceive) then
+              FUSBasp.FOnUARTReceive(libusb_strerror(libusb_error(RcvLen)));
+            Sleep(20);
+            //Terminate;
+            Break;
+          end;
         end;
-        FUSBasp.FBufferSend := nil;
+        FUSBasp.FBufferReady := False;
       end;
     finally
-      FUSBasp.FSendLock.Release;
-    end;
-    if RcvLen < 0 then
-    begin
-      if Assigned(FUSBasp.FOnUARTReceive) then
-        FUSBasp.FOnUARTReceive(libusb_strerror(libusb_error(RcvLen)));
-      Sleep(20);
-      //Terminate;
-      //Break;
+      SendLock.Release;
     end;
   end;
 end;
@@ -243,17 +246,20 @@ begin
   FOnUARTReceive := AValue;
 end;
 
-procedure TUSBasp.SetSendBuffer(AValue: string);
+procedure TUSBasp.SetSendBuffer(const AValue: string);
 var
   tmp: TBytes;
 begin
-  FSendLock.Acquire;
+  if FBufferReady or (AValue.Length = 0) then
+    Exit;
+  SendLock.Acquire;
   try
     tmp := BytesOf(AValue);
     SetLength(FBufferSend, Length(tmp));
     move(tmp[0], FBufferSend[0], Length(tmp));
+    FBufferReady := True;
   finally
-    FSendLock.Release;
+    SendLock.Release;
   end;
 end;
 
@@ -279,18 +285,17 @@ constructor TUSBasp.Create;
 begin
   usbasp_initialization;
   FUSBaspDevices := TUSBaspDeviceList.Create;
-  FSendLock := TCriticalSection.Create;
   FUSBaspID := 255;
   FConnected := False;
   FSupportUART := False;
   FSupportTPI := False;
+  FBufferReady := False;
 end;
 
 destructor TUSBasp.Destroy;
 begin
   UARTClose;
   Disconnect;
-  FSendLock.Free;
   FUSBaspDevices.Free;
   usbasp_finalization;
   inherited Destroy;
@@ -359,5 +364,11 @@ begin
   end;
   Result := FUARTOpened;
 end;
+
+initialization
+  SendLock := TCriticalSection.Create;
+
+finalization
+  SendLock.Free;
 
 end.
