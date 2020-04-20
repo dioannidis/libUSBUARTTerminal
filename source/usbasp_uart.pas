@@ -61,7 +61,7 @@ type
     Manufacturer: string[255];
     SerialNumber: string[255];
     HasUart: boolean;
-    HasTPI: Boolean;
+    HasTPI: boolean;
     Interface0Claimed: boolean;
   end;
   PUSBaspDevice = ^TUSBaspDevice;
@@ -74,6 +74,7 @@ type
   public
     destructor Destroy; override;
     function Add(Value: PUSBaspDevice): integer;
+    procedure FreeItems;
     property Items[Index: integer]: PUSBaspDevice read Get; default;
   end;
 
@@ -86,8 +87,7 @@ function usbasp_uart_enable(const AUSBasp: PUSBaspDevice; ABaud: integer;
   AFlags: integer): integer;
 function usbasp_uart_disable(const AUSBasp: PUSBaspDevice): integer;
 
-function usbasp_uart_read(AUSBasp: PUSBaspDevice; ABuff: PChar;
-  len: integer): integer;
+function usbasp_uart_read(AUSBasp: PUSBaspDevice; ABuff: PChar; len: integer): integer;
 function usbasp_uart_write(const AUSBasp: PUSBaspDevice; ABuff: PChar;
   len: integer): integer;
 
@@ -129,9 +129,9 @@ var
   locResult: integer;
   locDummy: array [0..3] of byte;
 
-function usbasp_uart_transmit(const AUSBaspHandle: plibusb_device_handle; AReceive: uint8_t;
-  AFunctionId: uint8_t; ASend: array of byte; ABuffer: PChar;
-  ABufferSize: uint16_t): integer;
+function usbasp_uart_transmit(const AUSBaspHandle: plibusb_device_handle;
+  AReceive: uint8_t; AFunctionId: uint8_t; ASend: array of byte;
+  ABuffer: PChar; ABufferSize: uint16_t): integer;
 begin
   Result := libusb_control_transfer(AUSBaspHandle,
     (byte(LIBUSB_REQUEST_TYPE_VENDOR) or byte(LIBUSB_RECIPIENT_DEVICE) or
@@ -161,7 +161,7 @@ end;
 
 function usbasp_finalization: integer;
 begin
-  libusb_free_device_list(plibusb_device(USBDeviceList), 1);
+  libusb_free_device_list(plibusb_device(USBDeviceList), USBDeviceListCount);
   libusb_exit(GlobalContext);
 end;
 
@@ -223,7 +223,6 @@ function usbasp_devices(var AUSBaspDeviceList: TUSBaspDeviceList): integer;
     tmpUSBaspDevice^.HasUart := (Caps and USBASP_CAP_6_UART) <> 0;
     tmpUSBaspDevice^.HasTPI := (Caps and USBASP_CAP_0_TPI) <> 0;
 
-
     Result := tmpUSBaspDevice;
   end;
 
@@ -233,9 +232,10 @@ var
   iResult, i, USBaspCount: integer;
   tmpHandle: plibusb_device_handle;
 begin
+  AUSBaspDeviceList.FreeItems;
   AUSBaspDeviceList.Clear;
-  if USBDeviceList <> nil then
-    libusb_free_device_list(plibusb_device(USBDeviceList), 1);
+  if Assigned(USBDeviceList) then
+    libusb_free_device_list(plibusb_device(USBDeviceList), USBDeviceListCount);
   USBDeviceListCount := libusb_get_device_list(GlobalContext,
     plibusb_device(USBDeviceList));
   for i := 0 to USBDeviceListCount - 1 do
@@ -308,13 +308,13 @@ begin
   Result := 0;
 end;
 
-function usbasp_uart_read(AUSBasp: PUSBaspDevice; ABuff: PChar;
-  len: integer): integer;
+function usbasp_uart_read(AUSBasp: PUSBaspDevice; ABuff: PChar; len: integer): integer;
 begin
   if (len > 254) then
     len := 254;
   // The USBasp V-USB library is not configured with USB_CFG_LONG_TRANSFERS for long transfers.
-  Result := usbasp_uart_transmit(AUSBasp^.Handle, 1, USBASP_FUNC_UART_RX, locDummy, ABuff, len);
+  Result := usbasp_uart_transmit(AUSBasp^.Handle, 1, USBASP_FUNC_UART_RX,
+    locDummy, ABuff, len);
 end;
 
 function usbasp_uart_write(const AUSBasp: PUSBaspDevice; ABuff: PChar;
@@ -331,7 +331,8 @@ begin
     exit;
   if len > TXAvail then
     len := TXAvail;
-  Result := usbasp_uart_transmit(AUSBasp^.Handle, 0, USBASP_FUNC_UART_TX, locDummy, ABuff, len);
+  Result := usbasp_uart_transmit(AUSBasp^.Handle, 0, USBASP_FUNC_UART_TX,
+    locDummy, ABuff, len);
 end;
 
 function usbasp_uart_disable(const AUSBasp: PUSBaspDevice): integer;
@@ -349,12 +350,17 @@ begin
   Result := PUSBaspDevice(inherited Get(Index));
 end;
 
-destructor TUSBaspDeviceList.Destroy;
+procedure TUSBaspDeviceList.FreeItems;
 var
   i: integer;
 begin
   for i := 0 to Count - 1 do
     FreeMem(Items[i]);
+end;
+
+destructor TUSBaspDeviceList.Destroy;
+begin
+  FreeItems;
   inherited Destroy;
 end;
 
