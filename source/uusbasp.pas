@@ -33,8 +33,18 @@ interface
 uses
   Classes, SysUtils, Forms, StdCtrls, syncobjs, usbasp_uart;
 
+const
+  TSerialBaudRate: array[0..13] of integer =
+    (300, 600, 1200, 2400, 4800, 9600, 14400, 19200, 28800, 31250, 38400,
+    57600, 74880, 115200);
+
 type
-  TLineBreakMode = (lbmNoLineBreak, lbmCR, lbmLF, lbmCRLF);
+  TUARTReceive = procedure(const AMsg: string) of object;
+
+  TRawSerialDataMsg = record
+    AsString: string;
+  end;
+  PRawSerialDataMsg = ^TRawSerialDataMsg;
 
   { TUSBasp }
 
@@ -42,46 +52,42 @@ type
   private
     FConnected: boolean;
     FSupportUART: boolean;
-    FUSBaspDeviceSelectedID: byte;
+    FSupportTPI: boolean;
+    FUARTOpened: boolean;
+    FUSBaspID: byte;
     FUSBaspDevices: TUSBaspDeviceList;
     FBufferSend: array of byte;
     FSendLock: TCriticalSection;
     FLastUsbError: integer;
-    FBaudRate: integer;
-    FLineBreakMode: TLineBreakMode;
-    FAutoScroll: boolean;
-    FTimeStamp: boolean;
-    FLastCharReceived: char;
-    FMemo: TMemo;
+    FThreadReceive, FThreadSend: TThread;
     function GetUSBaspDevice: TUSBaspDevice;
-    procedure SetAutoScroll(AValue: boolean);
     procedure SetConnected(AValue: boolean);
-    procedure SetSelectedUSBaspDeviceID(AValue: byte);
-    procedure SetTimeStamp(AValue: boolean);
+    procedure SetOnUARTReceive(AValue: TUARTReceive);
     procedure SetSendBuffer(AValue: string);
+    procedure SetUSBaspID(AValue: byte);
   protected
-    procedure SerialReceivedProcessing(const AMsg: string);
-    procedure NoLineBreak(Data: PtrInt);
-    procedure LineBreakCR(Data: PtrInt);
-    procedure LineBreakLF(Data: PtrInt);
-    procedure LineBreakCRLF(Data: PtrInt);
-    procedure AutoScrollHack;
-    function GetTimeStamp: string;
+    FOnUARTReceive: TUARTReceive;
+    property USBaspDevice: TUSBaspDevice read GetUSBaspDevice;
   public
     constructor Create;
     destructor Destroy; override;
-    function Connect: boolean;
+
+    function Connect(const AUSBaspDeviceID: byte = 0): boolean;
     function Disconnect: boolean;
+
+    function UARTOpen(const ABaudRate: integer): boolean;
+    function UARTClose: boolean;
+
     procedure LoadUSBaspDevices;
-    property USBaspID: byte read FUSBaspDeviceSelectedID
-      write SetSelectedUSBaspDeviceID;
-    property Connected: boolean read FConnected write SetConnected;
-    property AutoScroll: boolean read FAutoScroll write SetAutoScroll;
-    property TimeStamp: boolean read FTimeStamp write SetTimeStamp;
+
+    property USBaspID: byte read FUSBaspID write SetUSBaspID;
+    property Connected: boolean read FConnected;
+    property UARTOpened: boolean read FUARTOpened;
     property SendBuffer: string write SetSendBuffer;
     property SupportUART: boolean read FSupportUART;
-    property USBaspDevice: TUSBaspDevice read GetUSBaspDevice;
     property USBaspDevices: TUSBaspDeviceList read FUSBaspDevices;
+
+    property OnUARTReceive: TUARTReceive read FOnUARTReceive write SetOnUARTReceive;
   end;
 
 implementation
@@ -90,11 +96,6 @@ uses
   libusb;
 
 type
-  TRawSerialDataMsg = record
-    AsString: string;
-  end;
-  PRawSerialDataMsg = ^TRawSerialDataMsg;
-
   { TUSBaspReceiveThread }
 
   TUSBaspReceiveThread = class(TThread)
@@ -103,11 +104,9 @@ type
   protected
     procedure Execute; override;
   public
-    constructor Create(const AUSBasp: TUSBasp);
+    constructor Create(const AFUSBasp: TUSBasp);
     destructor Destroy; override;
   end;
-
-{ TUSBaspReceiveThread }
 
 procedure TUSBaspReceiveThread.Execute;
 const
@@ -117,77 +116,43 @@ var
   RcvLen, LastUSBError: integer;
   RawSerialData: TBytes;
 begin
-  //LastUSBError := usbasp_uart_config(FUSBaspHandle, FBaudRate,
-  //  USBASP_UART_PARITY_NONE or USBASP_UART_BYTES_8B or USBASP_UART_STOP_1BIT);
 
-  //if LastUSBError <> 0 then
-  //begin
-  //  SerialReceivedProcessing(libusb_strerror(libusb_error(LastUSBError)));
-  //  Sleep(20);
-  //  Terminate;
-  //  Exit;
-  //end
-  //else
-  //  SetLength(USBaspBuffer, USBaspBufferSize);
+  SetLength(USBaspBuffer, USBaspBufferSize);
 
-  //while not terminated do
-  //begin
-  //  // Send
-  //  // TODO:  needs a separate thread ...
-  //  FSendLock.Acquire;
-  //  try
-  //    if Assigned(FBufferSend) then
-  //    begin
-  //      while RcvLen < Length(FBufferSend) do
-  //      begin
-  //        RcvLen := usbasp_uart_write(FUSBaspHandle, PChar(@FBufferSend[0]),
-  //          Length(FBufferSend));
-  //        if RcvLen < 0 then
-  //        begin
-  //          SerialReceivedProcessing(libusb_strerror(libusb_error(RcvLen)));
-  //          Sleep(20);
-  //          Terminate;
-  //          Break;
-  //        end;
-  //      end;
-  //      FBufferSend := nil;
-  //    end;
-  //  finally
-  //    FSendLock.Release;
-  //  end;
-
-  //  // Receive
-  //  RcvLen := usbasp_read(FUSBaspHandle, PChar(@USBaspBuffer[0]), USBaspBufferSize);
-  //  if (RcvLen = 0) then
-  //  begin
-  //    Sleep(5);
-  //    Continue;
-  //  end;
-  //  if RcvLen < 0 then
-  //  begin
-  //    SerialReceivedProcessing(libusb_strerror(libusb_error(RcvLen)));
-  //    Sleep(20);
-  //    Terminate;
-  //    Break;
-  //  end
-  //  else
-  //  begin
-  //    SetLength(RawSerialData, RcvLen);
-  //    Move(USBaspBuffer[0], RawSerialData[0], RcvLen);
-  //    SerialReceivedProcessing(TEncoding.ASCII.GetString(RawSerialData));
-  //    USBaspBuffer := nil;
-  //    SetLength(USBaspBuffer, USBaspBufferSize);
-  //  end;
-
-  //end;
-
-  //usbasp_uart_disable(FUSBaspHandle);
+  while not terminated do
+  begin
+    // Receive
+    RcvLen := usbasp_uart_read(FUSBasp.FUSBaspDevices[FUSBasp.FUSBaspID],
+      PChar(@USBaspBuffer[0]), USBaspBufferSize);
+    if (RcvLen = 0) then
+    begin
+      Sleep(5);
+      Continue;
+    end;
+    if RcvLen < 0 then
+    begin
+      if Assigned(FUSBasp.FOnUARTReceive) then
+        FUSBasp.FOnUARTReceive(libusb_strerror(libusb_error(RcvLen)));
+      Sleep(20);
+      Terminate;
+      Break;
+    end
+    else
+    begin
+      SetLength(RawSerialData, RcvLen);
+      Move(USBaspBuffer[0], RawSerialData[0], RcvLen);
+      if Assigned(FUSBasp.FOnUARTReceive) then
+        FUSBasp.FOnUARTReceive(TEncoding.ASCII.GetString(RawSerialData));
+      USBaspBuffer := nil;
+      SetLength(USBaspBuffer, USBaspBufferSize);
+    end;
+  end;
 end;
 
-constructor TUSBaspReceiveThread.Create(const AUSBasp: TUSBasp);
+constructor TUSBaspReceiveThread.Create(const AFUSBasp: TUSBasp);
 begin
+  FUSBasp := AFUSBasp;
   inherited Create(False);
-  FUSBasp := AUSBasp;
 end;
 
 destructor TUSBaspReceiveThread.Destroy;
@@ -195,18 +160,73 @@ begin
   inherited Destroy;
 end;
 
-{ TUSBasp }
+type
+  { TUSBaspSendThread }
 
-procedure TUSBasp.SetAutoScroll(AValue: boolean);
+  TUSBaspSendThread = class(TThread)
+  private
+    FUSBasp: TUSBasp;
+  protected
+    procedure Execute; override;
+  public
+    constructor Create(const AFUSBasp: TUSBasp);
+    destructor Destroy; override;
+  end;
+
+{ TUSBaspSendThread }
+
+procedure TUSBaspSendThread.Execute;
+const
+  USBaspBufferSize = 254;
+var
+  USBaspBuffer: array of byte;
+  RcvLen, LastUSBError: integer;
+  RawSerialData: TBytes;
 begin
-  if FAutoScroll = AValue then
-    Exit;
-  FAutoScroll := AValue;
+  while not terminated do
+  begin
+    // Send
+    FUSBasp.FSendLock.Acquire;
+    try
+      if Assigned(FUSBasp.FBufferSend) then
+      begin
+        while RcvLen < Length(FUSBasp.FBufferSend) do
+        begin
+          RcvLen := usbasp_uart_write(FUSBasp.FUSBaspDevices[FUSBasp.FUSBaspID],
+            PChar(@FUSBasp.FBufferSend[0]), Length(FUSBasp.FBufferSend));
+        end;
+        FUSBasp.FBufferSend := nil;
+      end;
+    finally
+      FUSBasp.FSendLock.Release;
+    end;
+    if RcvLen < 0 then
+    begin
+      if Assigned(FUSBasp.FOnUARTReceive) then
+        FUSBasp.FOnUARTReceive(libusb_strerror(libusb_error(RcvLen)));
+      Sleep(20);
+      //Terminate;
+      //Break;
+    end;
+  end;
 end;
+
+constructor TUSBaspSendThread.Create(const AFUSBasp: TUSBasp);
+begin
+  FUSBasp := AFUSBasp;
+  inherited Create(False);
+end;
+
+destructor TUSBaspSendThread.Destroy;
+begin
+  inherited Destroy;
+end;
+
+{ TUSBasp }
 
 function TUSBasp.GetUSBaspDevice: TUSBaspDevice;
 begin
-  result := FUSBaspDevices[FUSBaspDeviceSelectedID]^;
+  Result := FUSBaspDevices[FUSBaspID]^;
 end;
 
 procedure TUSBasp.SetConnected(AValue: boolean);
@@ -216,23 +236,11 @@ begin
   FConnected := AValue;
 end;
 
-procedure TUSBasp.SetSelectedUSBaspDeviceID(AValue: byte);
+procedure TUSBasp.SetOnUARTReceive(AValue: TUARTReceive);
 begin
-  if FUSBaspDeviceSelectedID = AValue then
+  if FOnUARTReceive = AValue then
     Exit;
-  if AValue > FUSBaspDevices.Count - 1 then
-    Exit;
-  if FConnected then
-    Disconnect;
-  FUSBaspDeviceSelectedID := AValue;
-  FSupportUART:= FUSBaspDevices[FUSBaspDeviceSelectedID]^.HasUart;
-end;
-
-procedure TUSBasp.SetTimeStamp(AValue: boolean);
-begin
-  if FTimeStamp = AValue then
-    Exit;
-  FTimeStamp := AValue;
+  FOnUARTReceive := AValue;
 end;
 
 procedure TUSBasp.SetSendBuffer(AValue: string);
@@ -249,179 +257,38 @@ begin
   end;
 end;
 
+procedure TUSBasp.SetUSBaspID(AValue: byte);
+begin
+  if FUSBaspID = AValue then
+    Exit;
+  if FConnected then
+    Exit;
+  FUSBaspID := AValue;
+  FSupportUART := FUSBaspDevices[FUSBaspID]^.HasUart;
+  FSupportTPI := FUSBaspDevices[FUSBaspID]^.HasTPI;
+end;
+
 procedure TUSBasp.LoadUSBaspDevices;
 begin
   usbasp_devices(FUSBaspDevices);
   FUSBaspDevices.Count;
 end;
 
-procedure TUSBasp.SerialReceivedProcessing(const AMsg: string);
-var
-  RawSerialDataMsg: PRawSerialDataMsg;
-begin
-  New(RawSerialDataMsg);
-  RawSerialDataMsg^.AsString := AMsg;
-  case FLineBreakMode of
-    lbmNoLineBreak: Application.QueueAsyncCall(@NoLineBreak, PtrInt(RawSerialDataMsg));
-    lbmCR: Application.QueueAsyncCall(@LineBreakCR, PtrInt(RawSerialDataMsg));
-    lbmLF: Application.QueueAsyncCall(@LineBreakLF, PtrInt(RawSerialDataMsg));
-    lbmCRLF: Application.QueueAsyncCall(@LineBreakCRLF, PtrInt(RawSerialDataMsg))
-  end;
-end;
-
-procedure TUSBasp.NoLineBreak(Data: PtrInt);
-var
-  RawSerialDataMsg: TRawSerialDataMsg;
-  LastLine: integer;
-begin
-  RawSerialDataMsg := PRawSerialDataMsg(Data)^;
-  try
-    if (FMemo <> nil) and (not Application.Terminated) and
-      (RawSerialDataMsg.AsString.Length > 0) then
-    begin
-      LastLine := FMemo.Lines.Count - 1;
-      FMemo.Lines.BeginUpdate;
-      FMemo.Lines[LastLine] :=
-        FMemo.Lines[LastLine] + RawSerialDataMsg.AsString.Substring(0);
-      AutoScrollHack;
-      FMemo.Lines.EndUpdate;
-    end;
-  finally
-    Dispose(PRawSerialDataMsg(Data));
-  end;
-end;
-
-procedure TUSBasp.LineBreakCR(Data: PtrInt);
-var
-  RawSerialDataMsg: TRawSerialDataMsg;
-  LastLine: integer;
-begin
-  RawSerialDataMsg := PRawSerialDataMsg(Data)^;
-  try
-    if (FMemo <> nil) and (not Application.Terminated) and
-      (RawSerialDataMsg.AsString.Length > 0) then
-    begin
-      LastLine := FMemo.Lines.Count - 1;
-      FMemo.Lines.BeginUpdate;
-      FMemo.Lines[LastLine] :=
-        FMemo.Lines[LastLine] + RawSerialDataMsg.AsString.Substring(0);
-      AutoScrollHack;
-      FMemo.Lines.EndUpdate;
-    end;
-  finally
-    Dispose(PRawSerialDataMsg(Data));
-  end;
-end;
-
-procedure TUSBasp.LineBreakLF(Data: PtrInt);
-var
-  RawSerialDataMsg: TRawSerialDataMsg;
-  LastLine: integer;
-begin
-  RawSerialDataMsg := PRawSerialDataMsg(Data)^;
-  try
-    if (FMemo <> nil) and (not Application.Terminated) and
-      (RawSerialDataMsg.AsString.Length > 0) then
-    begin
-      LastLine := FMemo.Lines.Count - 1;
-      FMemo.Lines.BeginUpdate;
-      FMemo.Lines[LastLine] :=
-        FMemo.Lines[LastLine] + RawSerialDataMsg.AsString.Substring(0);
-      AutoScrollHack;
-      FMemo.Lines.EndUpdate;
-    end;
-  finally
-    Dispose(PRawSerialDataMsg(Data));
-  end;
-end;
-
-procedure TUSBasp.LineBreakCRLF(Data: PtrInt);
-var
-  RawSerialDataMsg: TRawSerialDataMsg;
-  LastLine, i, j: integer;
-begin
-  RawSerialDataMsg := PRawSerialDataMsg(Data)^;
-  try
-    if (FMemo <> nil) and (not Application.Terminated) and
-      (RawSerialDataMsg.AsString.Length > 0) then
-    begin
-      LastLine := FMemo.Lines.Count - 1;
-      i := 1;
-      j := i;
-      if FLastCharReceived = #13 then
-        RawSerialDataMsg.AsString := FLastCharReceived + RawSerialDataMsg.AsString;
-      FMemo.Lines.BeginUpdate;
-      while i < RawSerialDataMsg.AsString.Length do
-      begin
-        if (RawSerialDataMsg.AsString[i] = #13) and
-          (RawSerialDataMsg.AsString[i + 1] = #10) then
-        begin
-          FMemo.Lines[LastLine] :=
-            FMemo.Lines[LastLine] + RawSerialDataMsg.AsString.Substring(j - 1, i - j);
-          if FTimeStamp then
-            FMemo.Append(GetTimeStamp)
-          else
-            FMemo.Append('');
-          LastLine := FMemo.Lines.Count - 1;
-          Inc(i, 2);
-          j := i;
-        end
-        else
-          Inc(i);
-      end;
-      FMemo.Lines[LastLine] :=
-        FMemo.Lines[LastLine] + RawSerialDataMsg.AsString.Substring(j - 1);
-      AutoScrollHack;
-      FMemo.Lines.EndUpdate;
-      if RawSerialDataMsg.AsString[RawSerialDataMsg.AsString.Length] = #13 then
-        FLastCharReceived := #13
-      else
-        FLastCharReceived := #0;
-    end;
-  finally
-    Dispose(PRawSerialDataMsg(Data));
-  end;
-end;
-
-procedure TUSBasp.AutoScrollHack;
-begin
-  if FAutoScroll then
-  begin
-    /////// HACK TO SCROLL BOTTOM //////////
-    FMemo.SelStart := Length(FMemo.Lines.Text);
-    FMemo.VertScrollBar.Position := 1000000;
-    /////// HACK TO SCROLL BOTTOM //////////
-  end;
-end;
-
-function TUSBasp.GetTimeStamp: string;
-begin
-  Result := TimeToStr(Now) + ': ';
-end;
-
-//constructor TUSBasp.Create(const ABaudRate: integer; AMemo: TMemo;
-//  ALineBreakMode: TLineBreakMode; AAutoScroll: boolean; ATimeStamp: boolean);
-//begin
-//  FSendLock := TCriticalSection.Create;
-//  //FBufferSend := nil;
-//  //FTimeStamp := ATimeStamp;
-//  //FAutoScroll := AAutoScroll;
-//  //FBaudRate := ABaudRate;
-//  //FLineBreakMode := ALineBreakMode;
-//  FMemo := AMemo;
-//end;
 
 constructor TUSBasp.Create;
 begin
   usbasp_initialization;
   FUSBaspDevices := TUSBaspDeviceList.Create;
   FSendLock := TCriticalSection.Create;
-  FUSBaspDeviceSelectedID := 255;
+  FUSBaspID := 255;
   FConnected := False;
+  FSupportUART := False;
+  FSupportTPI := False;
 end;
 
 destructor TUSBasp.Destroy;
 begin
+  UARTClose;
   Disconnect;
   FSendLock.Free;
   FUSBaspDevices.Free;
@@ -429,14 +296,14 @@ begin
   inherited Destroy;
 end;
 
-function TUSBasp.Connect: boolean;
+function TUSBasp.Connect(const AUSBaspDeviceID: byte = 0): boolean;
 begin
-  if (not FConnected) and (FUSBaspDeviceSelectedID <> 255) then
+  if (not FConnected) then
   begin
-    FLastUsbError := usbasp_open(FUSBaspDevices[FUSBaspDeviceSelectedID]);
+    FLastUsbError := usbasp_open(FUSBaspDevices[AUSBaspDeviceID]);
     if FLastUsbError < 0 then
     begin
-
+      FUSBaspID := AUSBaspDeviceID;
     end
     else
       FConnected := True;
@@ -448,7 +315,9 @@ function TUSBasp.Disconnect: boolean;
 begin
   if FConnected then
   begin
-    FLastUsbError := usbasp_close(FUSBaspDevices[FUSBaspDeviceSelectedID]);
+    if FUARTOpened then
+      UARTClose;
+    FLastUsbError := usbasp_close(FUSBaspDevices[FUSBaspID]);
     if FLastUsbError < 0 then
     begin
 
@@ -457,6 +326,38 @@ begin
       FConnected := False;
   end;
   Result := FConnected;
+end;
+
+function TUSBasp.UARTOpen(const ABaudRate: integer): boolean;
+begin
+  if FConnected and FSupportUART and not FUARTOpened then
+  begin
+    FLastUsbError := usbasp_uart_enable(FUSBaspDevices[FUSBaspID],
+      ABaudRate, USBASP_UART_BYTES_8B or USBASP_UART_STOP_1BIT or
+      USBASP_UART_PARITY_NONE);
+    FUARTOpened := True;
+    FThreadReceive := TUSBaspReceiveThread.Create(Self);
+    FThreadSend := TUSBaspSendThread.Create(Self);
+  end;
+  Result := FUARTOpened;
+end;
+
+function TUSBasp.UARTClose: boolean;
+begin
+  if FConnected and FSupportUART and FUARTOpened then
+  begin
+    FThreadReceive.Terminate;
+    FThreadReceive.WaitFor;
+    FreeAndNil(FThreadReceive);
+
+    FThreadSend.Terminate;
+    FThreadSend.WaitFor;
+    FreeAndNil(FThreadSend);
+
+    usbasp_uart_disable(FUSBaspDevices[FUSBaspID]);
+    FUARTOpened := False;
+  end;
+  Result := FUARTOpened;
 end;
 
 end.

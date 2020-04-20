@@ -61,6 +61,7 @@ type
     Manufacturer: string[255];
     SerialNumber: string[255];
     HasUart: boolean;
+    HasTPI: Boolean;
     Interface0Claimed: boolean;
   end;
   PUSBaspDevice = ^TUSBaspDevice;
@@ -81,14 +82,14 @@ function usbasp_initialization: integer;
 function usbasp_finalization: integer;
 function usbasp_open(const AUSBasp: PUSBaspDevice): integer;
 function usbasp_close(const AUSBasp: PUSBaspDevice): integer;
-function usbasp_uart_config(const AUSBasp: PUSBaspDevice; ABaud: integer;
+function usbasp_uart_enable(const AUSBasp: PUSBaspDevice; ABaud: integer;
   AFlags: integer): integer;
-function usbasp_uart_read(const AUSBasp: PUSBaspDevice; ABuff: PChar;
+function usbasp_uart_disable(const AUSBasp: PUSBaspDevice): integer;
+
+function usbasp_uart_read(AUSBasp: PUSBaspDevice; ABuff: PChar;
   len: integer): integer;
 function usbasp_uart_write(const AUSBasp: PUSBaspDevice; ABuff: PChar;
   len: integer): integer;
-function usbasp_uart_enable(const AUSBasp: PUSBaspDevice): integer;
-function usbasp_uart_disable(const AUSBasp: PUSBaspDevice): integer;
 
 implementation
 
@@ -111,6 +112,7 @@ const
 
   USBASP_FUNC_GETCAPABILITIES = 127;
 
+  USBASP_CAP_0_TPI = 1;
   USBASP_CAP_6_UART = (1 shl 6);
 
   USBASP_NO_CAPS = (-4);
@@ -127,23 +129,23 @@ var
   locResult: integer;
   locDummy: array [0..3] of byte;
 
-function usbasp_uart_transmit(const AUSBasp: PUSBaspDevice; AReceive: uint8_t;
+function usbasp_uart_transmit(const AUSBaspHandle: plibusb_device_handle; AReceive: uint8_t;
   AFunctionId: uint8_t; ASend: array of byte; ABuffer: PChar;
   ABufferSize: uint16_t): integer;
 begin
-  Result := libusb_control_transfer(AUSBasp^.Handle,
+  Result := libusb_control_transfer(AUSBaspHandle,
     (byte(LIBUSB_REQUEST_TYPE_VENDOR) or byte(LIBUSB_RECIPIENT_DEVICE) or
     (AReceive shl 7)) and $FF, AFunctionId, ((ASend[1] shl 8) or ASend[0]),
     ((ASend[3] shl 8) or ASend[2]), @ABuffer[0], ABufferSize, 5000);
 end;
 
-function usbasp_uart_capabilities(const AUSBasp: PUSBaspDevice): uint32_t;
+function usbasp_uart_capabilities(const AUSBaspHandle: plibusb_device_handle): uint32_t;
 var
   Res: array [0..3] of uint8_t;
   iResult: integer;
 begin
   Result := 0;
-  iResult := usbasp_uart_transmit(AUSBasp, 1, USBASP_FUNC_GETCAPABILITIES,
+  iResult := usbasp_uart_transmit(AUSBaspHandle, 1, USBASP_FUNC_GETCAPABILITIES,
     locDummy, PChar(@Res[0]), length(Res));
   if iResult = 4 then
     Result := Res[0] or (uint32_t(Res[1]) shl 8) or (uint32_t(Res[2]) shl 16) or
@@ -209,6 +211,7 @@ function usbasp_devices(var AUSBaspDeviceList: TUSBaspDeviceList): integer;
   begin
     GetMem(tmpUSBaspDevice, SizeOf(TUSBaspDevice));
     tmpUSBaspDevice^.USBDevice := AUSBDevice;
+    tmpUSBaspDevice^.Handle := nil;
     tmpUSBaspDevice^.ProductName :=
       GetDescriptorString(AUSBaspHandle, AUSBDeviceDescriptor.iProduct);
     tmpUSBaspDevice^.Manufacturer :=
@@ -216,12 +219,10 @@ function usbasp_devices(var AUSBaspDeviceList: TUSBaspDeviceList): integer;
     tmpUSBaspDevice^.SerialNumber :=
       GetDescriptorString(AUSBaspHandle, AUSBDeviceDescriptor.iSerialNumber);
 
-    tmpUSBaspDevice^.Handle := AUSBaspHandle;
-    tmpUSBaspDevice^.HasUart := false;
-    Caps := usbasp_uart_capabilities(tmpUSBaspDevice);
-    if (caps and USBASP_CAP_6_UART) = USBASP_CAP_6_UART then
-      tmpUSBaspDevice^.HasUart := True;
-    tmpUSBaspDevice^.Handle := nil;
+    Caps := usbasp_uart_capabilities(AUSBaspHandle);
+    tmpUSBaspDevice^.HasUart := (Caps and USBASP_CAP_6_UART) <> 0;
+    tmpUSBaspDevice^.HasTPI := (Caps and USBASP_CAP_0_TPI) <> 0;
+
 
     Result := tmpUSBaspDevice;
   end;
@@ -264,7 +265,7 @@ begin
   Result := 0;
 end;
 
-function usbasp_uart_config(const AUSBasp: PUSBaspDevice; ABaud: integer;
+function usbasp_uart_enable(const AUSBasp: PUSBaspDevice; ABaud: integer;
   AFlags: integer): integer;
 var
   //Caps: uint32_t;
@@ -302,18 +303,18 @@ begin
   Send[0] := Presc and $FF;
   Send[2] := AFlags and $FF;
 
-  iResult := usbasp_uart_transmit(AUSBasp, 1, USBASP_FUNC_UART_CONFIG,
+  iResult := usbasp_uart_transmit(AUSBasp^.Handle, 1, USBASP_FUNC_UART_CONFIG,
     Send, PChar(@locDummy[0]), 0);
   Result := 0;
 end;
 
-function usbasp_uart_read(const AUSBasp: PUSBaspDevice; ABuff: PChar;
+function usbasp_uart_read(AUSBasp: PUSBaspDevice; ABuff: PChar;
   len: integer): integer;
 begin
   if (len > 254) then
     len := 254;
   // The USBasp V-USB library is not configured with USB_CFG_LONG_TRANSFERS for long transfers.
-  Result := usbasp_uart_transmit(AUSBasp, 1, USBASP_FUNC_UART_RX, locDummy, ABuff, len);
+  Result := usbasp_uart_transmit(AUSBasp^.Handle, 1, USBASP_FUNC_UART_RX, locDummy, ABuff, len);
 end;
 
 function usbasp_uart_write(const AUSBasp: PUSBaspDevice; ABuff: PChar;
@@ -323,27 +324,21 @@ var
   TXAvail: integer;
 begin
   FillChar(TXFree, SizeOf(TXFree), 0);
-  usbasp_uart_transmit(AUSBasp, 1, USBASP_FUNC_UART_TX_FREE, locDummy,
+  usbasp_uart_transmit(AUSBasp^.Handle, 1, USBASP_FUNC_UART_TX_FREE, locDummy,
     PChar(@TXFree[0]), 2);
   TXAvail := (TXFree[0] shl 8) or byte(TXFree[1]);
   if TXAvail = 0 then
     exit;
   if len > TXAvail then
     len := TXAvail;
-  Result := usbasp_uart_transmit(AUSBasp, 0, USBASP_FUNC_UART_TX, locDummy, ABuff, len);
-end;
-
-function usbasp_uart_enable(const AUSBasp: PUSBaspDevice): integer;
-begin
-
-  Result := 0;
+  Result := usbasp_uart_transmit(AUSBasp^.Handle, 0, USBASP_FUNC_UART_TX, locDummy, ABuff, len);
 end;
 
 function usbasp_uart_disable(const AUSBasp: PUSBaspDevice): integer;
 var
   iResult: integer;
 begin
-  iResult := usbasp_uart_transmit(AUSBasp, 1, USBASP_FUNC_UART_DISABLE,
+  iResult := usbasp_uart_transmit(AUSBasp^.Handle, 1, USBASP_FUNC_UART_DISABLE,
     locDummy, PChar(@locDummy[0]), 0);
 end;
 
