@@ -67,7 +67,6 @@ type
     procedure SetUSBaspID(AValue: byte);
   protected
     FOnUARTReceive: TUARTReceive;
-    property USBaspDevice: TUSBaspDevice read GetUSBaspDevice;
   public
     constructor Create;
     destructor Destroy; override;
@@ -86,6 +85,7 @@ type
     property SendBuffer: string write SetSendBuffer;
     property SupportUART: boolean read FSupportUART;
     property USBaspDevices: TUSBaspDeviceList read FUSBaspDevices;
+    property USBaspDevice: TUSBaspDevice read GetUSBaspDevice;
 
     property OnUARTReceive: TUARTReceive read FOnUARTReceive write SetOnUARTReceive;
   end;
@@ -129,7 +129,7 @@ begin
       PChar(@USBaspBuffer[0]), USBaspBufferSize);
     if (RcvLen = 0) then
     begin
-      Sleep(5);
+      Sleep(1);
       Continue;
     end;
     if RcvLen < 0 then
@@ -137,8 +137,6 @@ begin
       if Assigned(FUSBasp.FOnUARTReceive) then
         FUSBasp.FOnUARTReceive(libusb_strerror(libusb_error(RcvLen)));
       Sleep(20);
-      Terminate;
-      Break;
     end
     else
     begin
@@ -193,6 +191,7 @@ begin
     try
       if FUSBasp.FBufferReady then
       begin
+        RcvLen:=0;
         while RcvLen < Length(FUSBasp.FBufferSend) do
         begin
           RcvLen := usbasp_uart_write(FUSBasp.FUSBaspDevices[FUSBasp.FUSBaspID],
@@ -202,12 +201,11 @@ begin
             if Assigned(FUSBasp.FOnUARTReceive) then
               FUSBasp.FOnUARTReceive(libusb_strerror(libusb_error(RcvLen)));
             Sleep(20);
-            //Terminate;
-            Break;
           end;
         end;
         FUSBasp.FBufferReady := False;
       end;
+      Sleep(1);
     finally
       SendLock.Release;
     end;
@@ -250,7 +248,7 @@ procedure TUSBasp.SetSendBuffer(const AValue: string);
 var
   tmp: TBytes;
 begin
-  if FBufferReady or (AValue.Length = 0) then
+  if (AValue.Length = 0) then
     Exit;
   SendLock.Acquire;
   try

@@ -77,6 +77,7 @@ type
     procedure btnDisconnectClick(Sender: TObject);
     procedure cbxUSBaspDeviceCloseUp(Sender: TObject);
     procedure cbxUSBaspDeviceDropDown(Sender: TObject);
+    procedure edtSendKeyPress(Sender: TObject; var Key: char);
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure FormKeyPress(Sender: TObject; var Key: char);
@@ -139,7 +140,16 @@ end;
 procedure TfrmMain.cbxUSBaspDeviceCloseUp(Sender: TObject);
 begin
   if FUSBasp.USBaspDevices.Count - 1 >= 0 then
+  begin
     FUSBasp.USBaspID := cbxUSBaspDevice.ItemIndex;
+    AppStatusBar.SimpleText :=
+      'Product: [' + FUSBasp.USBaspDevice.ProductName + '] Manufacturer: [' +
+      FUSBasp.USBaspDevice.Manufacturer + '] Serial number: [' +
+      FUSBasp.USBaspDevice.SerialNumber + '] TPI: [' + BoolToStr(FUSBasp.USBaspDevice.HasTPI, 'On', 'Off') +
+      '] UART: [' +BoolToStr(FUSBasp.USBaspDevice.HasTPI, 'On', 'Off') +']';
+  end
+  else
+    AppStatusBar.SimpleText := 'No USBasp Device Found';
   ToggleGUI;
 end;
 
@@ -166,6 +176,12 @@ begin
     cbxUSBaspDevice.ItemIndex := -1;
   end;
   cbxUSBaspDevice.Items.EndUpdate;
+end;
+
+procedure TfrmMain.edtSendKeyPress(Sender: TObject; var Key: char);
+begin
+  if Key = #13 then
+    btnSendClick(Self);
 end;
 
 procedure TfrmMain.btnClearMemoClick(Sender: TObject);
@@ -237,7 +253,7 @@ end;
 
 procedure TfrmMain.ToggleGUI;
 begin
-  cbxUSBaspDevice.Enabled := FUSBasp.USBaspID = 255;
+  cbxUSBaspDevice.Enabled := not FUSBasp.Connected;
   btnConnect.Enabled := (FUSBasp.USBaspID <> 255) and not FUSBasp.Connected;
   btnDisconnect.Enabled := (FUSBasp.USBaspID <> 255) and not btnConnect.Enabled;
   gbUART.Enabled := (FUSBasp.USBaspID <> 255) and FUSBasp.SupportUART and

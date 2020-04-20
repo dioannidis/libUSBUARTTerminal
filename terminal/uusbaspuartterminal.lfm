@@ -24,6 +24,7 @@ object frmMain: TfrmMain
     Width = 672
     Anchors = [akTop, akLeft, akRight]
     Enabled = False
+    OnKeyPress = edtSendKeyPress
     TabOrder = 0
   end
   object btnSend: TButton
