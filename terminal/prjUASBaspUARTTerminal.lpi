@@ -20,9 +20,9 @@
     <VersionInfo>
       <UseVersionInfo Value="True"/>
       <AutoIncrementBuild Value="True"/>
-      <MinorVersionNr Value="3"/>
-      <BuildNr Value="13"/>
-      <StringTable FileDescription="USBasp UART Terminal" InternalName="prjUSBaspUARTTerminal" LegalCopyright="© 2020 Dimitrios Chr. Ioannidis" LegalTrademarks="© 2020 Dimitrios Chr. Ioannidis" OriginalFilename="prjUSBaspUARTTerminal.exe" ProductName="USBasp UART Terminal" ProductVersion="0.0"/>
+      <MinorVersionNr Value="4"/>
+      <BuildNr Value="14"/>
+      <StringTable FileDescription="USBasp UART Terminal" InternalName="prjUSBaspUARTTerminal" LegalCopyright="© 2020 Dimitrios Chr. Ioannidis" LegalTrademarks="© 2020 Dimitrios Chr. Ioannidis" OriginalFilename="prjUSBaspUARTTerminal.exe" ProductName="USBasp UART Terminal" ProductVersion="0.4"/>
     </VersionInfo>
     <BuildModes Count="2">
       <Item1 Name="Debug" Default="True"/>
@@ -89,9 +89,6 @@
         <ResourceBaseClass Value="Form"/>
       </Unit1>
     </Units>
-    <Debugger>
-      <Backend Value="{DD97F5F8-485F-49BD-AEAF-BFFD9261B3BE}"/>
-    </Debugger>
   </ProjectOptions>
   <CompilerOptions>
     <Version Value="11"/>
