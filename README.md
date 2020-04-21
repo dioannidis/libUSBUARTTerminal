@@ -6,16 +6,16 @@
   
   It's still in Alpha version, just because there isn't too much free time .... :(
   
-  A screenshot connected to a USBasp which is connected to a atmega328p running the demo [fp_ethernet_enc28j60](https://scm.nephelae.eu/Nephelae/fp_ethernet_enc28j60/wiki) firmware ( [mirror github repository](https://github.com/dioannidis/fp_ethernet_enc28j60) ) sniffing my network ( with a enc28j60 ofcourse ...) .  
+  A screenshot connected to a USBasp which is connected to a atmega328p running the demo [fp_ethernet_enc28j60](https://scm.nephelae.eu/Nephelae/fp_ethernet_enc28j60/wiki) firmware ( [mirror github repository](https://github.com/dioannidis/fp_ethernet_enc28j60) ) sniffing my network ( with a enc28j60 of course ...) .  
   
-  ![](https://scm.nephelae.eu/attachments/813ddd7d-c0e2-4eb0-b509-7ab901aca2ba)
+  ![](https://scm.nephelae.eu/attachments/8410ab95-e2e8-4129-be12-e8e387ea1771)
   
   
   Windows Binaries :
   
-  Release date 20/04/2020
+  Release date 21/04/2020
   
-  [UASBaspUARTTerminal-win64-binary.zip](https://scm.nephelae.eu/attachments/29e86ab0-f35f-472e-8fe1-b7cb02a2ad6a)
+  [USBaspUARTTerminal-win64-binary.zip](https://scm.nephelae.eu/attachments/43d9449d-f277-4373-a4d6-505dd564d81d)
   
   
   Copyright © 2020 Dimitrios Chr. Ioannidis

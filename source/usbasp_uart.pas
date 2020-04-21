@@ -184,6 +184,7 @@ begin
   libusb_close(AUSBasp^.Handle);
   AUSBasp^.Handle := nil;
   AUSBasp^.HasUart := False;
+  AUSBasp^.HasTPI := False;
   AUSBasp^.Interface0Claimed := False;
 end;
 
@@ -303,9 +304,8 @@ begin
   Send[0] := Presc and $FF;
   Send[2] := AFlags and $FF;
 
-  iResult := usbasp_uart_transmit(AUSBasp^.Handle, 1, USBASP_FUNC_UART_CONFIG,
+  Result := usbasp_uart_transmit(AUSBasp^.Handle, 1, USBASP_FUNC_UART_CONFIG,
     Send, PChar(@locDummy[0]), 0);
-  Result := 0;
 end;
 
 function usbasp_uart_read(AUSBasp: PUSBaspDevice; ABuff: PChar; len: integer): integer;
@@ -323,6 +323,7 @@ var
   TXFree: array[0..1] of byte;
   TXAvail: integer;
 begin
+  Result := 0;
   FillChar(TXFree, SizeOf(TXFree), 0);
   usbasp_uart_transmit(AUSBasp^.Handle, 1, USBASP_FUNC_UART_TX_FREE, locDummy,
     PChar(@TXFree[0]), 2);

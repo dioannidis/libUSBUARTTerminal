@@ -50,6 +50,7 @@ type
     cbxBaudRate: TComboBoxEx;
     cbxLineBreak: TComboBoxEx;
     cbxUSBaspDevice: TComboBox;
+    cbxWordWrap: TCheckBox;
     ckbAutoScroll: TCheckBox;
     ckbTimeStamp: TCheckBox;
     edtSend: TEdit;
@@ -77,6 +78,7 @@ type
     procedure btnDisconnectClick(Sender: TObject);
     procedure cbxUSBaspDeviceCloseUp(Sender: TObject);
     procedure cbxUSBaspDeviceDropDown(Sender: TObject);
+    procedure cbxWordWrapChange(Sender: TObject);
     procedure edtSendKeyPress(Sender: TObject; var Key: char);
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
@@ -145,8 +147,9 @@ begin
     AppStatusBar.SimpleText :=
       'Product: [' + FUSBasp.USBaspDevice.ProductName + '] Manufacturer: [' +
       FUSBasp.USBaspDevice.Manufacturer + '] Serial number: [' +
-      FUSBasp.USBaspDevice.SerialNumber + '] TPI: [' + BoolToStr(FUSBasp.USBaspDevice.HasTPI, 'On', 'Off') +
-      '] UART: [' +BoolToStr(FUSBasp.USBaspDevice.HasTPI, 'On', 'Off') +']';
+      FUSBasp.USBaspDevice.SerialNumber + '] TPI: [' +
+      BoolToStr(FUSBasp.USBaspDevice.HasTPI, 'On', 'Off') +
+      '] UART: [' + BoolToStr(FUSBasp.USBaspDevice.HasTPI, 'On', 'Off') + ']';
   end
   else
     AppStatusBar.SimpleText := 'No USBasp Device Found';
@@ -176,6 +179,11 @@ begin
     cbxUSBaspDevice.ItemIndex := -1;
   end;
   cbxUSBaspDevice.Items.EndUpdate;
+end;
+
+procedure TfrmMain.cbxWordWrapChange(Sender: TObject);
+begin
+  mmDisplay.WordWrap := cbxWordWrap.State = cbChecked;
 end;
 
 procedure TfrmMain.edtSendKeyPress(Sender: TObject; var Key: char);
