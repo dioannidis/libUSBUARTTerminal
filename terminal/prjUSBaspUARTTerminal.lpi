@@ -31,7 +31,7 @@
           <Version Value="11"/>
           <PathDelim Value="\"/>
           <Target>
-            <Filename Value="bin\$(TargetCPU)-$(TargetOS)\$(BuildMode)\prjUASBaspUARTTerminal"/>
+            <Filename Value="bin\$(TargetCPU)-$(TargetOS)\$(BuildMode)\prjUSBaspUARTTerminal"/>
           </Target>
           <SearchPaths>
             <IncludeFiles Value="$(ProjOutDir)"/>
@@ -78,7 +78,7 @@
     </RequiredPackages>
     <Units Count="2">
       <Unit0>
-        <Filename Value="prjUASBaspUARTTerminal.lpr"/>
+        <Filename Value="prjUSBaspUARTTerminal.lpr"/>
         <IsPartOfProject Value="True"/>
       </Unit0>
       <Unit1>
@@ -94,7 +94,7 @@
     <Version Value="11"/>
     <PathDelim Value="\"/>
     <Target>
-      <Filename Value="bin\$(TargetCPU)-$(TargetOS)\$(BuildMode)\prjUASBaspUARTTerminal"/>
+      <Filename Value="bin\$(TargetCPU)-$(TargetOS)\$(BuildMode)\prjUSBaspUARTTerminal"/>
     </Target>
     <SearchPaths>
       <IncludeFiles Value="$(ProjOutDir)"/>
