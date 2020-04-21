@@ -8,7 +8,7 @@
   
   A screenshot connected to a USBasp which is connected to a atmega328p running the demo [fp_ethernet_enc28j60](https://scm.nephelae.eu/Nephelae/fp_ethernet_enc28j60/wiki) firmware ( [mirror github repository](https://github.com/dioannidis/fp_ethernet_enc28j60) ) sniffing my network ( with a enc28j60 of course ...) .  
   
-  ![](https://scm.nephelae.eu/attachments/813ddd7d-c0e2-4eb0-b509-7ab901aca2ba)
+  ![](https://scm.nephelae.eu/attachments/8410ab95-e2e8-4129-be12-e8e387ea1771)
   
   
   Windows Binaries :
