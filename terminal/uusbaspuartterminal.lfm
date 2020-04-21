@@ -96,7 +96,6 @@ object frmMain: TfrmMain
       Width = 272
       ClientHeight = 51
       ClientWidth = 268
-      Enabled = False
       TabOrder = 0
       object lblLineBreak: TLabel
         Left = 8
@@ -181,7 +180,7 @@ object frmMain: TfrmMain
           item
             Caption = '115200'
           end>
-        ItemIndex = 3
+        ItemIndex = 5
         Style = csExDropDownList
         TabOrder = 1
       end
@@ -320,7 +319,7 @@ object frmMain: TfrmMain
     PoweredBy.About.Description.Strings = (
       'Component that shows a Powered By graphic.'#13#10'Use method ShowPoweredByForm in your form.create()'#13#10'to use the component'
     )
-    PoweredBy.About.Title = 'About About About About About About About About About About About About About PoweredBy component'
+    PoweredBy.About.Title = 'About About About About About About About About About About About About About About PoweredBy component'
     PoweredBy.About.Height = 280
     PoweredBy.About.Width = 400
     PoweredBy.About.Font.Color = clNavy

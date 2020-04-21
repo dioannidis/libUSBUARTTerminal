@@ -1,4 +1,4 @@
-program prjUASBaspUARTTerminal;
+program prjUSBaspUARTTerminal;
 
 {
 
