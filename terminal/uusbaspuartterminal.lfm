@@ -69,8 +69,8 @@ object frmMain: TfrmMain
     ItemHeight = 15
     OnCloseUp = cbxUSBaspDeviceCloseUp
     OnDropDown = cbxUSBaspDeviceDropDown
+    Style = csDropDownList
     TabOrder = 4
-    Text = 'Select USBasp Device'
   end
   object lblUSBaspDevice: TLabel
     Left = 613
