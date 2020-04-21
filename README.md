@@ -15,7 +15,7 @@
   
   Release date 20/04/2020
   
-  [UASBaspUARTTerminal-win64-binary.zip](https://scm.nephelae.eu/attachments/29e86ab0-f35f-472e-8fe1-b7cb02a2ad6a)
+  [UASBaspUARTTerminal-win64-binary.zip](https://scm.nephelae.eu/attachments/5e84f8f9-85ea-4572-a383-f4ad510a0daa)
   
   
   Copyright © 2020 Dimitrios Chr. Ioannidis
