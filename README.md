@@ -13,7 +13,7 @@
   
   Windows Binaries :
   
-  Release date 20/04/2020
+  Release date 21/04/2020
   
   [USBaspUARTTerminal-win64-binary.zip](https://scm.nephelae.eu/attachments/43d9449d-f277-4373-a4d6-505dd564d81d)
   
