@@ -32,7 +32,8 @@ interface
 
 uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, StdCtrls, Menus,
-  ComCtrls, ComboEx, ExtCtrls, MaskEdit, XMLPropStorage, usplashabout, uusbasp;
+  ComCtrls, ComboEx, ExtCtrls, MaskEdit, XMLPropStorage, Buttons, usplashabout,
+  uusbasp;
 
 type
 
@@ -71,6 +72,7 @@ type
     miFile: TMenuItem;
     miExit: TMenuItem;
     miAbout: TMenuItem;
+    sbtnRefresh: TSpeedButton;
     USBaspUARTAbout: TSplashAbout;
     AppStatusBar: TStatusBar;
     AppXMLPropStorage: TXMLPropStorage;
@@ -80,8 +82,7 @@ type
     procedure btnOpenClick(Sender: TObject);
     procedure btnSendClick(Sender: TObject);
     procedure btnDisconnectClick(Sender: TObject);
-    procedure cbxUSBaspDeviceCloseUp(Sender: TObject);
-    procedure cbxUSBaspDeviceDropDown(Sender: TObject);
+    procedure cbxUSBaspDeviceChange(Sender: TObject);
     procedure cbxWordWrapChange(Sender: TObject);
     procedure edtSendKeyPress(Sender: TObject; var Key: char);
     procedure FormCreate(Sender: TObject);
@@ -91,6 +92,7 @@ type
     procedure mmDisplayChange(Sender: TObject);
     procedure miExitClick(Sender: TObject);
     procedure miAboutClick(Sender: TObject);
+    procedure sbtnRefreshClick(Sender: TObject);
   private
     FUSBasp: TUSBasp;
     FLastCharReceived: char;
@@ -128,6 +130,23 @@ begin
   ToggleGUI;
 end;
 
+procedure TfrmMain.cbxUSBaspDeviceChange(Sender: TObject);
+begin
+  if FUSBasp.USBaspDevices.Count > 0 then
+  begin
+    FUSBasp.USBaspID := cbxUSBaspDevice.ItemIndex;
+    AppStatusBar.SimpleText :=
+      'Product: [' + FUSBasp.USBaspDevice.ProductName + '] Manufacturer: [' +
+      FUSBasp.USBaspDevice.Manufacturer + '] Serial number: [' +
+      FUSBasp.USBaspDevice.SerialNumber + '] TPI: [' +
+      BoolToStr(FUSBasp.USBaspDevice.HasTPI, 'On', 'Off') + '] UART: [' +
+      BoolToStr(FUSBasp.USBaspDevice.HasUart, 'On', 'Off') + ']';
+  end
+  else
+    AppStatusBar.SimpleText := 'No USBasp Device Found';
+  ToggleGUI;
+end;
+
 procedure TfrmMain.btnOpenClick(Sender: TObject);
 begin
   FUSBasp.UARTOpen(TUARTBaudRate[cbxBaudRate.ItemIndex],
@@ -140,46 +159,6 @@ procedure TfrmMain.btnCloseClick(Sender: TObject);
 begin
   FUSBasp.UARTClose;
   ToggleGUI;
-end;
-
-procedure TfrmMain.cbxUSBaspDeviceCloseUp(Sender: TObject);
-begin
-  if FUSBasp.USBaspDevices.Count - 1 >= 0 then
-  begin
-    FUSBasp.USBaspID := cbxUSBaspDevice.ItemIndex;
-    AppStatusBar.SimpleText :=
-      'Product: [' + FUSBasp.USBaspDevice.ProductName + '] Manufacturer: [' +
-      FUSBasp.USBaspDevice.Manufacturer + '] Serial number: [' +
-      FUSBasp.USBaspDevice.SerialNumber + '] TPI: [' +
-      BoolToStr(FUSBasp.USBaspDevice.HasTPI, 'On', 'Off') + '] UART: [' +
-      BoolToStr(FUSBasp.USBaspDevice.HasTPI, 'On', 'Off') + ']';
-  end
-  else
-    AppStatusBar.SimpleText := 'No USBasp Device Found';
-  ToggleGUI;
-end;
-
-procedure TfrmMain.cbxUSBaspDeviceDropDown(Sender: TObject);
-var
-  i: byte;
-begin
-  if FUSBasp.Connected then
-    Exit;
-  cbxUSBaspDevice.Items.BeginUpdate;
-  cbxUSBaspDevice.Items.Clear;
-  if FUSBasp.LoadUSBaspDevices > 0 then
-  begin
-    for i := 0 to FUSBasp.USBaspDevices.Count - 1 do
-      cbxUSBaspDevice.AddItem(FUSBasp.USBaspDevices[i]^.ProductName +
-        ' [' + FUSBasp.USBaspDevices[i]^.Manufacturer + ']', nil);
-    cbxUSBaspDevice.ItemIndex := 0;
-  end
-  else
-  begin
-    cbxUSBaspDevice.AddItem('No USBasp Device Found', nil);
-    cbxUSBaspDevice.ItemIndex := -1;
-  end;
-  cbxUSBaspDevice.Items.EndUpdate;
 end;
 
 procedure TfrmMain.cbxWordWrapChange(Sender: TObject);
@@ -261,13 +240,40 @@ begin
   USBaspUARTAbout.ShowAbout;
 end;
 
+procedure TfrmMain.sbtnRefreshClick(Sender: TObject);
+var
+  i: byte;
+begin
+  if FUSBasp.Connected then
+    Exit;
+  cbxUSBaspDevice.Items.BeginUpdate;
+  cbxUSBaspDevice.Items.Clear;
+  if FUSBasp.LoadUSBaspDevices > 0 then
+  begin
+    for i := 0 to FUSBasp.USBaspDevices.Count - 1 do
+      cbxUSBaspDevice.AddItem(FUSBasp.USBaspDevices[i]^.ProductName +
+        ' [' + FUSBasp.USBaspDevices[i]^.Manufacturer + ']', nil);
+    cbxUSBaspDevice.ItemIndex := 0;
+    cbxUSBaspDeviceChange(self);
+  end
+  else
+  begin
+    cbxUSBaspDevice.AddItem('No USBasp Device Found', nil);
+    cbxUSBaspDevice.ItemIndex := 0;
+    AppStatusBar.SimpleText := 'No USBasp Device Found';
+  end;
+  cbxUSBaspDevice.Items.EndUpdate;
+end;
+
 procedure TfrmMain.ToggleGUI;
 begin
   cbxUSBaspDevice.Enabled := not FUSBasp.Connected;
+  sbtnRefresh.Enabled := cbxUSBaspDevice.Enabled;
   btnConnect.Enabled := (FUSBasp.USBaspID <> USBaspIDNotFound) and not FUSBasp.Connected;
-  btnDisconnect.Enabled := (FUSBasp.USBaspID <> USBaspIDNotFound) and not btnConnect.Enabled;
-  gbUART.Enabled := (FUSBasp.USBaspID <> USBaspIDNotFound) and FUSBasp.USBaspDevice.HasUart and
-    FUSBasp.Connected;
+  btnDisconnect.Enabled := (FUSBasp.USBaspID <> USBaspIDNotFound) and
+    not btnConnect.Enabled;
+  gbUART.Enabled := (FUSBasp.USBaspID <> USBaspIDNotFound) and
+    FUSBasp.USBaspDevice.HasUart and FUSBasp.Connected;
   gbRuntimeSettings.Enabled := gbUART.Enabled;
   gbNoRuntimeSettings.Enabled := not FUSBasp.UARTOpened and gbUART.Enabled;
   btnOpen.Enabled := gbUART.Enabled and not FUSBasp.UARTOpened;
