@@ -4,7 +4,7 @@ unit usbasp_uart;
 
   This file is part of Object Pascal libUSB UART Terminal for USBasp ( Firmware 1.5 patched ).
 
-  libUSB UART Terminal types and helper functions.
+  libUSB USBasp UART library.
 
   Copyright (C) 2020 Dimitrios Chr. Ioannidis.
     Nephelae - https://www.nephelae.eu

@@ -4,7 +4,7 @@ unit uUSBasp_Threads;
 
   This file is part of Object Pascal libUSB UART Terminal for USBasp ( Firmware 1.5 patched ).
 
-  libUSB USBasp UART Terminal.
+  libUSB USBasp UART library.
 
   Copyright (C) 2020 Dimitrios Chr. Ioannidis.
     Nephelae - https://www.nephelae.eu

@@ -4,7 +4,7 @@ unit uUSBasp;
 
   This file is part of Object Pascal libUSB UART Terminal for USBasp ( Firmware 1.5 patched ).
 
-  libUSB USBasp UART Terminal.
+  libUSB USBasp UART library.
 
   Copyright (C) 2020 Dimitrios Chr. Ioannidis.
     Nephelae - https://www.nephelae.eu
@@ -40,6 +40,7 @@ const
 
 type
   TUARTReceive = procedure(const AMsg: string) of object;
+
   TWriteBuffer = array of byte;
 
   TRawSerialDataMsg = record
@@ -61,9 +62,9 @@ type
     FThreadReceive, FThreadSend: TThread;
     FOnUARTReceive: TUARTReceive;
     function GetUSBaspDevice: TUSBaspDevice;
-    procedure SetConnected(AValue: boolean);
-    procedure SetOnUARTReceive(AValue: TUARTReceive);
-    procedure SetUSBaspID(AValue: byte);
+    procedure SetConnected(const AValue: boolean);
+    procedure SetOnUARTReceive(const AValue: TUARTReceive);
+    procedure SetUSBaspID(const AValue: byte);
   public
     constructor Create;
     destructor Destroy; override;
@@ -88,56 +89,6 @@ uses
   uUSBasp_Threads;
 
 { TUSBasp }
-
-function TUSBasp.GetUSBaspDevice: TUSBaspDevice;
-begin
-  Result := FUSBaspDevices[FUSBaspID]^;
-end;
-
-procedure TUSBasp.SetConnected(AValue: boolean);
-begin
-  if FConnected = AValue then
-    Exit;
-  FConnected := AValue;
-end;
-
-procedure TUSBasp.SetOnUARTReceive(AValue: TUARTReceive);
-begin
-  if FOnUARTReceive = AValue then
-    Exit;
-  FOnUARTReceive := AValue;
-end;
-
-procedure TUSBasp.SetUSBaspID(AValue: byte);
-begin
-  if FUSBaspID = AValue then
-    Exit;
-  if FConnected then
-    Exit;
-  FUSBaspID := AValue;
-end;
-
-procedure TUSBasp.LoadUSBaspDevices;
-begin
-  usbasp_devices(FUSBaspDevices);
-  FUSBaspDevices.Count;
-end;
-
-procedure TUSBasp.UARTWrite(const ABuffer: string);
-var
-  tmp: TBytes;
-begin
-  FWriteBufferLock.Acquire;
-  try
-    tmp := BytesOf(ABuffer);
-    SetLength(FWriteBuffer, Length(tmp) + 1);
-    move(tmp[0], FWriteBuffer[1], Length(tmp));
-    FWriteBuffer[0] := 1;
-  finally
-    FWriteBufferLock.Release;
-  end;
-end;
-
 
 constructor TUSBasp.Create;
 begin
@@ -224,6 +175,55 @@ begin
     FUARTOpened := False;
   end;
   Result := FUARTOpened;
+end;
+
+function TUSBasp.GetUSBaspDevice: TUSBaspDevice;
+begin
+  Result := FUSBaspDevices[FUSBaspID]^;
+end;
+
+procedure TUSBasp.SetConnected(const AValue: boolean);
+begin
+  if FConnected = AValue then
+    Exit;
+  FConnected := AValue;
+end;
+
+procedure TUSBasp.SetOnUARTReceive(const AValue: TUARTReceive);
+begin
+  if FOnUARTReceive = AValue then
+    Exit;
+  FOnUARTReceive := AValue;
+end;
+
+procedure TUSBasp.SetUSBaspID(const AValue: byte);
+begin
+  if FUSBaspID = AValue then
+    Exit;
+  if FConnected then
+    Exit;
+  FUSBaspID := AValue;
+end;
+
+procedure TUSBasp.LoadUSBaspDevices;
+begin
+  usbasp_devices(FUSBaspDevices);
+  FUSBaspDevices.Count;
+end;
+
+procedure TUSBasp.UARTWrite(const ABuffer: string);
+var
+  tmp: TBytes;
+begin
+  FWriteBufferLock.Acquire;
+  try
+    tmp := BytesOf(ABuffer);
+    SetLength(FWriteBuffer, Length(tmp) + 1);
+    move(tmp[0], FWriteBuffer[1], Length(tmp));
+    FWriteBuffer[0] := 1;
+  finally
+    FWriteBufferLock.Release;
+  end;
 end;
 
 end.

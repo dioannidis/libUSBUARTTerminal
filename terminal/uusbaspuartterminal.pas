@@ -4,7 +4,7 @@ unit uusbaspuartterminal;
 
   This file is part of Object Pascal libUSB UART Terminal for USBasp ( Firmware 1.5 patched ).
 
-  libUSB USBasp UART Terminal.
+  libUSB USBasp UART Terminal GUI.
 
   Copyright (C) 2020 Dimitrios Chr. Ioannidis.
     Nephelae - https://www.nephelae.eu
@@ -279,55 +279,6 @@ begin
     btnConnect.SetFocus;
 end;
 
-procedure TfrmMain.LineBreakCRLF(Data: PtrInt);
-var
-  RawSerialDataMsg: TRawSerialDataMsg;
-  LastLine, i, j: integer;
-begin
-  RawSerialDataMsg := PRawSerialDataMsg(Data)^;
-  try
-    if (mmDisplay <> nil) and (not Application.Terminated) and
-      (RawSerialDataMsg.AsString.Length > 0) then
-    begin
-      LastLine := mmDisplay.Lines.Count - 1;
-      i := 1;
-      j := i;
-      if FLastCharReceived = #13 then
-        RawSerialDataMsg.AsString := FLastCharReceived + RawSerialDataMsg.AsString;
-      mmDisplay.Lines.BeginUpdate;
-      while i < RawSerialDataMsg.AsString.Length do
-      begin
-        if (RawSerialDataMsg.AsString[i] = #13) and
-          (RawSerialDataMsg.AsString[i + 1] = #10) then
-        begin
-          mmDisplay.Lines[LastLine] :=
-            mmDisplay.Lines[LastLine] + RawSerialDataMsg.AsString.Substring(
-            j - 1, i - j);
-          if ckbTimeStamp.State = cbChecked then
-            mmDisplay.Append(GetTimeStamp)
-          else
-            mmDisplay.Append('');
-          LastLine := mmDisplay.Lines.Count - 1;
-          Inc(i, 2);
-          j := i;
-        end
-        else
-          Inc(i);
-      end;
-      mmDisplay.Lines[LastLine] :=
-        mmDisplay.Lines[LastLine] + RawSerialDataMsg.AsString.Substring(j - 1);
-      AutoScrollHack;
-      mmDisplay.Lines.EndUpdate;
-      if RawSerialDataMsg.AsString[RawSerialDataMsg.AsString.Length] = #13 then
-        FLastCharReceived := #13
-      else
-        FLastCharReceived := #0;
-    end;
-  finally
-    Dispose(PRawSerialDataMsg(Data));
-  end;
-end;
-
 procedure TfrmMain.AutoScrollHack;
 begin
   if ckbAutoScroll.State = cbChecked then
@@ -376,6 +327,55 @@ begin
         mmDisplay.Lines[LastLine] + RawSerialDataMsg.AsString.Substring(0);
       AutoScrollHack;
       mmDisplay.Lines.EndUpdate;
+    end;
+  finally
+    Dispose(PRawSerialDataMsg(Data));
+  end;
+end;
+
+procedure TfrmMain.LineBreakCRLF(Data: PtrInt);
+var
+  RawSerialDataMsg: TRawSerialDataMsg;
+  LastLine, i, j: integer;
+begin
+  RawSerialDataMsg := PRawSerialDataMsg(Data)^;
+  try
+    if (mmDisplay <> nil) and (not Application.Terminated) and
+      (RawSerialDataMsg.AsString.Length > 0) then
+    begin
+      LastLine := mmDisplay.Lines.Count - 1;
+      i := 1;
+      j := i;
+      if FLastCharReceived = #13 then
+        RawSerialDataMsg.AsString := FLastCharReceived + RawSerialDataMsg.AsString;
+      mmDisplay.Lines.BeginUpdate;
+      while i < RawSerialDataMsg.AsString.Length do
+      begin
+        if (RawSerialDataMsg.AsString[i] = #13) and
+          (RawSerialDataMsg.AsString[i + 1] = #10) then
+        begin
+          mmDisplay.Lines[LastLine] :=
+            mmDisplay.Lines[LastLine] + RawSerialDataMsg.AsString.Substring(
+            j - 1, i - j);
+          if ckbTimeStamp.State = cbChecked then
+            mmDisplay.Append(GetTimeStamp)
+          else
+            mmDisplay.Append('');
+          LastLine := mmDisplay.Lines.Count - 1;
+          Inc(i, 2);
+          j := i;
+        end
+        else
+          Inc(i);
+      end;
+      mmDisplay.Lines[LastLine] :=
+        mmDisplay.Lines[LastLine] + RawSerialDataMsg.AsString.Substring(j - 1);
+      AutoScrollHack;
+      mmDisplay.Lines.EndUpdate;
+      if RawSerialDataMsg.AsString[RawSerialDataMsg.AsString.Length] = #13 then
+        FLastCharReceived := #13
+      else
+        FLastCharReceived := #0;
     end;
   finally
     Dispose(PRawSerialDataMsg(Data));
