@@ -97,6 +97,8 @@ begin
   FUSBaspDevices := TUSBaspDeviceList.Create;
   FUSBaspID := 255;
   FConnected := False;
+  // First byte of the array works as a switch.
+  // 0 = Data ready to send, 1 = Data sended
   FWriteBuffer := TWriteBuffer.Create(0);
 end;
 
