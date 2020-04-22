@@ -40,6 +40,7 @@ const
 
 type
   TUARTReceive = procedure(const AMsg: string) of object;
+  TWriteBuffer = array of byte;
 
   TRawSerialDataMsg = record
     AsString: string;
@@ -50,178 +51,41 @@ type
 
   TUSBasp = class(TObject)
   private
-    FConnected: boolean;
-    FSupportUART: boolean;
-    FSupportTPI: boolean;
-    FUARTOpened: boolean;
     FUSBaspID: byte;
     FUSBaspDevices: TUSBaspDeviceList;
-    FBufferSend: array of byte;
-    FBufferReady: boolean;
+    FConnected: boolean;
+    FUARTOpened: boolean;
+    FWriteBuffer: TWriteBuffer;
+    FWriteBufferLock: TCriticalSection;
     FLastUsbError: integer;
     FThreadReceive, FThreadSend: TThread;
+    FOnUARTReceive: TUARTReceive;
     function GetUSBaspDevice: TUSBaspDevice;
     procedure SetConnected(AValue: boolean);
     procedure SetOnUARTReceive(AValue: TUARTReceive);
-    procedure SetSendBuffer(const AValue: string);
     procedure SetUSBaspID(AValue: byte);
-  protected
-    FOnUARTReceive: TUARTReceive;
   public
     constructor Create;
     destructor Destroy; override;
-
     function Connect(const AUSBaspDeviceID: byte = 0): boolean;
     function Disconnect: boolean;
-
     function UARTOpen(const ABaudRate: integer): boolean;
     function UARTClose: boolean;
-
     procedure LoadUSBaspDevices;
-
-    property USBaspID: byte read FUSBaspID write SetUSBaspID;
+    procedure UARTWrite(const ABuffer: string);
+    property OnUARTReceive: TUARTReceive read FOnUARTReceive write SetOnUARTReceive;
     property Connected: boolean read FConnected;
     property UARTOpened: boolean read FUARTOpened;
-    property SendBuffer: string write SetSendBuffer;
-    property SupportUART: boolean read FSupportUART;
-    property USBaspDevices: TUSBaspDeviceList read FUSBaspDevices;
+    property USBaspID: byte read FUSBaspID write SetUSBaspID;
     property USBaspDevice: TUSBaspDevice read GetUSBaspDevice;
-
-    property OnUARTReceive: TUARTReceive read FOnUARTReceive write SetOnUARTReceive;
+    property USBaspDevices: TUSBaspDeviceList read FUSBaspDevices;
+    property UARTWriteBuffer: TWriteBuffer read FWriteBuffer;
   end;
 
 implementation
 
 uses
-  libusb;
-
-var
-  SendLock: TCriticalSection;
-
-type
-  { TUSBaspReceiveThread }
-
-  TUSBaspReceiveThread = class(TThread)
-  private
-    FUSBasp: TUSBasp;
-  protected
-    procedure Execute; override;
-  public
-    constructor Create(const AFUSBasp: TUSBasp);
-    destructor Destroy; override;
-  end;
-
-procedure TUSBaspReceiveThread.Execute;
-const
-  USBaspBufferSize = 254;
-var
-  USBaspBuffer: array of byte;
-  RcvLen, LastUSBError: integer;
-  RawSerialData: TBytes;
-begin
-
-  SetLength(USBaspBuffer, USBaspBufferSize);
-
-  while not terminated do
-  begin
-    // Receive
-    RcvLen := usbasp_uart_read(FUSBasp.FUSBaspDevices[FUSBasp.FUSBaspID],
-      PChar(@USBaspBuffer[0]), USBaspBufferSize);
-    if (RcvLen = 0) then
-    begin
-      Sleep(1);
-      Continue;
-    end;
-    if RcvLen < 0 then
-    begin
-      if Assigned(FUSBasp.FOnUARTReceive) then
-        FUSBasp.FOnUARTReceive(libusb_strerror(libusb_error(RcvLen)));
-      Sleep(20);
-    end
-    else
-    begin
-      SetLength(RawSerialData, RcvLen);
-      Move(USBaspBuffer[0], RawSerialData[0], RcvLen);
-      if Assigned(FUSBasp.FOnUARTReceive) then
-        FUSBasp.FOnUARTReceive(TEncoding.ASCII.GetString(RawSerialData));
-      USBaspBuffer := nil;
-      SetLength(USBaspBuffer, USBaspBufferSize);
-    end;
-  end;
-end;
-
-constructor TUSBaspReceiveThread.Create(const AFUSBasp: TUSBasp);
-begin
-  FUSBasp := AFUSBasp;
-  inherited Create(False);
-end;
-
-destructor TUSBaspReceiveThread.Destroy;
-begin
-  inherited Destroy;
-end;
-
-type
-  { TUSBaspSendThread }
-
-  TUSBaspSendThread = class(TThread)
-  private
-    FUSBasp: TUSBasp;
-  protected
-    procedure Execute; override;
-  public
-    constructor Create(const AFUSBasp: TUSBasp);
-    destructor Destroy; override;
-  end;
-
-{ TUSBaspSendThread }
-
-procedure TUSBaspSendThread.Execute;
-const
-  USBaspBufferSize = 254;
-var
-  USBaspBuffer: array of byte;
-  RcvLen, LastUSBError: integer;
-  RawSerialData: TBytes;
-begin
-  while not terminated do
-  begin
-    // Send
-    SendLock.Acquire;
-    try
-      if FUSBasp.FBufferReady then
-      begin
-        RcvLen:=0;
-        while RcvLen < Length(FUSBasp.FBufferSend) do
-        begin
-          RcvLen := usbasp_uart_write(FUSBasp.FUSBaspDevices[FUSBasp.FUSBaspID],
-            PChar(@FUSBasp.FBufferSend[0]), Length(FUSBasp.FBufferSend));
-          if RcvLen < 0 then
-          begin
-            if Assigned(FUSBasp.FOnUARTReceive) then
-              FUSBasp.FOnUARTReceive(libusb_strerror(libusb_error(RcvLen)));
-            Sleep(20);
-          end;
-        end;
-        FUSBasp.FBufferReady := False;
-      end;
-      Sleep(1);
-    finally
-      SendLock.Release;
-    end;
-  end;
-end;
-
-constructor TUSBaspSendThread.Create(const AFUSBasp: TUSBasp);
-begin
-  FUSBasp := AFUSBasp;
-  inherited Create(False);
-end;
-
-destructor TUSBaspSendThread.Destroy;
-begin
-  inherited Destroy;
-end;
+  uUSBasp_Threads;
 
 { TUSBasp }
 
@@ -244,23 +108,6 @@ begin
   FOnUARTReceive := AValue;
 end;
 
-procedure TUSBasp.SetSendBuffer(const AValue: string);
-var
-  tmp: TBytes;
-begin
-  if (AValue.Length = 0) then
-    Exit;
-  SendLock.Acquire;
-  try
-    tmp := BytesOf(AValue);
-    SetLength(FBufferSend, Length(tmp));
-    move(tmp[0], FBufferSend[0], Length(tmp));
-    FBufferReady := True;
-  finally
-    SendLock.Release;
-  end;
-end;
-
 procedure TUSBasp.SetUSBaspID(AValue: byte);
 begin
   if FUSBaspID = AValue then
@@ -268,8 +115,6 @@ begin
   if FConnected then
     Exit;
   FUSBaspID := AValue;
-  FSupportUART := FUSBaspDevices[FUSBaspID]^.HasUart;
-  FSupportTPI := FUSBaspDevices[FUSBaspID]^.HasTPI;
 end;
 
 procedure TUSBasp.LoadUSBaspDevices;
@@ -278,16 +123,30 @@ begin
   FUSBaspDevices.Count;
 end;
 
+procedure TUSBasp.UARTWrite(const ABuffer: string);
+var
+  tmp: TBytes;
+begin
+  FWriteBufferLock.Acquire;
+  try
+    tmp := BytesOf(ABuffer);
+    SetLength(FWriteBuffer, Length(tmp) + 1);
+    move(tmp[0], FWriteBuffer[1], Length(tmp));
+    FWriteBuffer[0] := 1;
+  finally
+    FWriteBufferLock.Release;
+  end;
+end;
+
 
 constructor TUSBasp.Create;
 begin
   usbasp_initialization;
+  FWriteBufferLock := TCriticalSection.Create;
   FUSBaspDevices := TUSBaspDeviceList.Create;
   FUSBaspID := 255;
   FConnected := False;
-  FSupportUART := False;
-  FSupportTPI := False;
-  FBufferReady := False;
+  FWriteBuffer := TWriteBuffer.Create(0);
 end;
 
 destructor TUSBasp.Destroy;
@@ -296,6 +155,7 @@ begin
   Disconnect;
   FUSBaspDevices.Free;
   usbasp_finalization;
+  FWriteBufferLock.Free;
   inherited Destroy;
 end;
 
@@ -332,22 +192,25 @@ begin
 end;
 
 function TUSBasp.UARTOpen(const ABaudRate: integer): boolean;
+var
+  iRealBaud: integer;
 begin
-  if FConnected and FSupportUART and not FUARTOpened then
+  if FConnected and FUSBaspDevices[FUSBaspID]^.HasUart and not FUARTOpened then
   begin
-    FLastUsbError := usbasp_uart_enable(FUSBaspDevices[FUSBaspID],
-      ABaudRate, USBASP_UART_BYTES_8B or USBASP_UART_STOP_1BIT or
+    iRealBaud := ABaudRate;
+    FLastUsbError := usbasp_uart_enable(FUSBaspDevices[FUSBaspID]^.Handle,
+      iRealBaud, USBASP_UART_BYTES_8B or USBASP_UART_STOP_1BIT or
       USBASP_UART_PARITY_NONE);
     FUARTOpened := True;
     FThreadReceive := TUSBaspReceiveThread.Create(Self);
-    FThreadSend := TUSBaspSendThread.Create(Self);
+    FThreadSend := TUSBaspSendThread.Create(Self, FWriteBufferLock);
   end;
   Result := FUARTOpened;
 end;
 
 function TUSBasp.UARTClose: boolean;
 begin
-  if FConnected and FSupportUART and FUARTOpened then
+  if FConnected and FUSBaspDevices[FUSBaspID]^.HasUart and FUARTOpened then
   begin
     FThreadReceive.Terminate;
     FThreadReceive.WaitFor;
@@ -362,11 +225,5 @@ begin
   end;
   Result := FUARTOpened;
 end;
-
-initialization
-  SendLock := TCriticalSection.Create;
-
-finalization
-  SendLock.Free;
 
 end.
