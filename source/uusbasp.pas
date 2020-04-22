@@ -82,7 +82,7 @@ type
     function Disconnect: boolean;
     function UARTOpen(const ABaudRate, ADataBits, AParity, AStopBits: integer): boolean;
     function UARTClose: boolean;
-    function LoadUSBaspDevices: Integer;
+    function LoadUSBaspDevices: integer;
     procedure UARTWrite(const ABuffer: string);
     property OnUARTReceive: TUARTReceive read FOnUARTReceive write SetOnUARTReceive;
     property Connected: boolean read FConnected;
@@ -125,12 +125,14 @@ end;
 
 function TUSBasp.Connect(const AUSBaspDeviceID: byte = 0): boolean;
 begin
-  if (not FConnected) then
+  if (not FConnected) and (FUSBaspDevices.Count > 0) and (AUSBaspDeviceID in [0..(FUSBaspDevices.Count - 1)]) then
   begin
-    FLastUsbError := usbasp_open(FUSBaspDevices[AUSBaspDeviceID]);
+    FUSBaspID := AUSBaspDeviceID;
+    FUSBaspDeviceSelected := FUSBaspDevices[FUSBaspID]^;
+    FLastUsbError := usbasp_open(FUSBaspDevices[FUSBaspID]);
     if FLastUsbError < 0 then
     begin
-      FUSBaspID := AUSBaspDeviceID;
+
     end
     else
       FConnected := True;
@@ -201,22 +203,22 @@ procedure TUSBasp.SetUSBaspID(const AValue: byte);
 begin
   if FUSBaspID = AValue then
     Exit;
-  if FConnected then
+  if FConnected or (FUSBaspDevices.Count = 0) then
     Exit;
-  if AValue in [(FUSBaspDevices.Count-1)..(FUSBaspDevices.Count)] then
+  if AValue in [0..(FUSBaspDevices.Count - 1)] then
   begin
     FUSBaspID := AValue;
     FUSBaspDeviceSelected := FUSBaspDevices[FUSBaspID]^;
   end;
 end;
 
-function TUSBasp.LoadUSBaspDevices: Integer;
+function TUSBasp.LoadUSBaspDevices: integer;
 begin
   Result := 0;
   if not FConnected then
     Result := usbasp_devices(FUSBaspDevices);
   if Result = 0 then
-    FUSBaspID:= USBaspIDNotFound;
+    FUSBaspID := USBaspIDNotFound;
 end;
 
 procedure TUSBasp.UARTWrite(const ABuffer: string);
