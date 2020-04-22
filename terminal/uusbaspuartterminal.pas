@@ -116,22 +116,6 @@ implementation
 
 { TfrmMain }
 
-procedure TfrmMain.btnOpenClick(Sender: TObject);
-begin
-  if FUSBasp.Connected and FUSBasp.USBaspDevice.HasUart and not FUSBasp.UARTOpened then
-    FUSBasp.UARTOpen(TUARTBaudRate[cbxBaudRate.ItemIndex],
-      TUARTDataBits[cbxDataBits.ItemIndex],
-      TUARTParity[cbxParity.ItemIndex], TUARTStopBit[cbxStopBits.ItemIndex]);
-  ToggleGUI;
-end;
-
-procedure TfrmMain.btnCloseClick(Sender: TObject);
-begin
-  if FUSBasp.Connected and FUSBasp.USBaspDevice.HasUart and FUSBasp.UARTOpened then
-    FUSBasp.UARTClose;
-  ToggleGUI;
-end;
-
 procedure TfrmMain.btnConnectClick(Sender: TObject);
 begin
   FUSBasp.Connect(cbxUSBaspDevice.ItemIndex);
@@ -141,6 +125,20 @@ end;
 procedure TfrmMain.btnDisconnectClick(Sender: TObject);
 begin
   FUSBasp.Disconnect;
+  ToggleGUI;
+end;
+
+procedure TfrmMain.btnOpenClick(Sender: TObject);
+begin
+  FUSBasp.UARTOpen(TUARTBaudRate[cbxBaudRate.ItemIndex],
+    TUARTDataBits[cbxDataBits.ItemIndex],
+    TUARTParity[cbxParity.ItemIndex], TUARTStopBit[cbxStopBits.ItemIndex]);
+  ToggleGUI;
+end;
+
+procedure TfrmMain.btnCloseClick(Sender: TObject);
+begin
+  FUSBasp.UARTClose;
   ToggleGUI;
 end;
 
@@ -169,8 +167,7 @@ begin
     Exit;
   cbxUSBaspDevice.Items.BeginUpdate;
   cbxUSBaspDevice.Items.Clear;
-  FUSBasp.LoadUSBaspDevices;
-  if FUSBasp.USBaspDevices.Count - 1 >= 0 then
+  if FUSBasp.LoadUSBaspDevices > 0 then
   begin
     for i := 0 to FUSBasp.USBaspDevices.Count - 1 do
       cbxUSBaspDevice.AddItem(FUSBasp.USBaspDevices[i]^.ProductName +
@@ -267,9 +264,9 @@ end;
 procedure TfrmMain.ToggleGUI;
 begin
   cbxUSBaspDevice.Enabled := not FUSBasp.Connected;
-  btnConnect.Enabled := (FUSBasp.USBaspID <> 255) and not FUSBasp.Connected;
-  btnDisconnect.Enabled := (FUSBasp.USBaspID <> 255) and not btnConnect.Enabled;
-  gbUART.Enabled := (FUSBasp.USBaspID <> 255) and FUSBasp.USBaspDevice.HasUart and
+  btnConnect.Enabled := (FUSBasp.USBaspID <> USBaspIDNotFound) and not FUSBasp.Connected;
+  btnDisconnect.Enabled := (FUSBasp.USBaspID <> USBaspIDNotFound) and not btnConnect.Enabled;
+  gbUART.Enabled := (FUSBasp.USBaspID <> USBaspIDNotFound) and FUSBasp.USBaspDevice.HasUart and
     FUSBasp.Connected;
   gbRuntimeSettings.Enabled := gbUART.Enabled;
   gbNoRuntimeSettings.Enabled := not FUSBasp.UARTOpened and gbUART.Enabled;
@@ -310,14 +307,16 @@ begin
   RawSerialDataMsg^.AsString := AMsg;
   case cbxLineBreak.ItemIndex of
     0: Application.QueueAsyncCall(@NoLineBreak, PtrInt(RawSerialDataMsg));
-    1:  begin
-          RawSerialDataMsg^.BreakChar := #13;
-          Application.QueueAsyncCall(@LineBreakCRorLF, PtrInt(RawSerialDataMsg));
-        end;
-    2:  begin
-          RawSerialDataMsg^.BreakChar := #10;
-          Application.QueueAsyncCall(@LineBreakCRorLF, PtrInt(RawSerialDataMsg));
-        end;
+    1:
+    begin
+      RawSerialDataMsg^.BreakChar := #13;
+      Application.QueueAsyncCall(@LineBreakCRorLF, PtrInt(RawSerialDataMsg));
+    end;
+    2:
+    begin
+      RawSerialDataMsg^.BreakChar := #10;
+      Application.QueueAsyncCall(@LineBreakCRorLF, PtrInt(RawSerialDataMsg));
+    end;
     3: Application.QueueAsyncCall(@LineBreakCRLF, PtrInt(RawSerialDataMsg))
   end;
 end;
