@@ -36,8 +36,6 @@ uses
 
 type
 
-  TLineBreakMode = (lbmNoLineBreak, lbmCR, lbmLF, lbmCRLF);
-
   { TfrmMain }
 
   TfrmMain = class(TForm)
@@ -48,16 +46,22 @@ type
     btnOpen: TButton;
     btnSend: TButton;
     cbxBaudRate: TComboBoxEx;
+    cbxParity: TComboBoxEx;
+    cbxStopBits: TComboBoxEx;
     cbxLineBreak: TComboBoxEx;
     cbxUSBaspDevice: TComboBox;
     cbxWordWrap: TCheckBox;
     ckbAutoScroll: TCheckBox;
     ckbTimeStamp: TCheckBox;
+    cbxDataBits: TComboBoxEx;
     edtSend: TEdit;
     gbNoRuntimeSettings: TGroupBox;
     gbRuntimeSettings: TGroupBox;
     gbUART: TGroupBox;
     lblBaud: TLabel;
+    lblStopBits: TLabel;
+    lblParity: TLabel;
+    lblDataBits: TLabel;
     lblLineBreak: TLabel;
     lblMemoBufferLines: TLabel;
     lblUSBaspDevice: TLabel;
@@ -94,6 +98,7 @@ type
 
     procedure USBaspUARTReceiveProcessing(const AMsg: string);
     procedure NoLineBreak(Data: PtrInt);
+    procedure LineBreakCRorLF(Data: PtrInt);
     procedure LineBreakCRLF(Data: PtrInt);
 
     procedure AutoScrollHack;
@@ -112,11 +117,11 @@ implementation
 { TfrmMain }
 
 procedure TfrmMain.btnOpenClick(Sender: TObject);
-var
-  s: string;
 begin
   if FUSBasp.Connected and FUSBasp.USBaspDevice.HasUart and not FUSBasp.UARTOpened then
-    FUSBasp.UARTOpen(TSerialBaudRate[cbxBaudRate.ItemIndex]);
+    FUSBasp.UARTOpen(TUARTBaudRate[cbxBaudRate.ItemIndex],
+      TUARTDataBits[cbxDataBits.ItemIndex],
+      TUARTParity[cbxParity.ItemIndex], TUARTStopBit[cbxStopBits.ItemIndex]);
   ToggleGUI;
 end;
 
@@ -148,8 +153,8 @@ begin
       'Product: [' + FUSBasp.USBaspDevice.ProductName + '] Manufacturer: [' +
       FUSBasp.USBaspDevice.Manufacturer + '] Serial number: [' +
       FUSBasp.USBaspDevice.SerialNumber + '] TPI: [' +
-      BoolToStr(FUSBasp.USBaspDevice.HasTPI, 'On', 'Off') +
-      '] UART: [' + BoolToStr(FUSBasp.USBaspDevice.HasTPI, 'On', 'Off') + ']';
+      BoolToStr(FUSBasp.USBaspDevice.HasTPI, 'On', 'Off') + '] UART: [' +
+      BoolToStr(FUSBasp.USBaspDevice.HasTPI, 'On', 'Off') + ']';
   end
   else
     AppStatusBar.SimpleText := 'No USBasp Device Found';
@@ -169,7 +174,7 @@ begin
   begin
     for i := 0 to FUSBasp.USBaspDevices.Count - 1 do
       cbxUSBaspDevice.AddItem(FUSBasp.USBaspDevices[i]^.ProductName +
-      ' [' + FUSBasp.USBaspDevices[i]^.Manufacturer + ']', nil);
+        ' [' + FUSBasp.USBaspDevices[i]^.Manufacturer + ']', nil);
     cbxUSBaspDevice.ItemIndex := 0;
   end
   else
@@ -305,8 +310,14 @@ begin
   RawSerialDataMsg^.AsString := AMsg;
   case cbxLineBreak.ItemIndex of
     0: Application.QueueAsyncCall(@NoLineBreak, PtrInt(RawSerialDataMsg));
-    //  lbmCR: Application.QueueAsyncCall(@LineBreakCR, PtrInt(RawSerialDataMsg));
-    //  lbmLF: Application.QueueAsyncCall(@LineBreakLF, PtrInt(RawSerialDataMsg));
+    1:  begin
+          RawSerialDataMsg^.BreakChar := #13;
+          Application.QueueAsyncCall(@LineBreakCRorLF, PtrInt(RawSerialDataMsg));
+        end;
+    2:  begin
+          RawSerialDataMsg^.BreakChar := #10;
+          Application.QueueAsyncCall(@LineBreakCRorLF, PtrInt(RawSerialDataMsg));
+        end;
     3: Application.QueueAsyncCall(@LineBreakCRLF, PtrInt(RawSerialDataMsg))
   end;
 end;
@@ -325,6 +336,48 @@ begin
       mmDisplay.Lines.BeginUpdate;
       mmDisplay.Lines[LastLine] :=
         mmDisplay.Lines[LastLine] + RawSerialDataMsg.AsString.Substring(0);
+      AutoScrollHack;
+      mmDisplay.Lines.EndUpdate;
+    end;
+  finally
+    Dispose(PRawSerialDataMsg(Data));
+  end;
+end;
+
+procedure TfrmMain.LineBreakCRorLF(Data: PtrInt);
+var
+  RawSerialDataMsg: TRawSerialDataMsg;
+  LastLine, i, j: integer;
+begin
+  RawSerialDataMsg := PRawSerialDataMsg(Data)^;
+  try
+    if (mmDisplay <> nil) and (not Application.Terminated) and
+      (RawSerialDataMsg.AsString.Length > 0) then
+    begin
+      LastLine := mmDisplay.Lines.Count - 1;
+      i := 1;
+      j := i;
+      mmDisplay.Lines.BeginUpdate;
+      while i < RawSerialDataMsg.AsString.Length do
+      begin
+        if (RawSerialDataMsg.AsString[i] = RawSerialDataMsg.BreakChar) then
+        begin
+          mmDisplay.Lines[LastLine] :=
+            mmDisplay.Lines[LastLine] + RawSerialDataMsg.AsString.Substring(
+            j - 1, i - j);
+          if ckbTimeStamp.State = cbChecked then
+            mmDisplay.Append(GetTimeStamp)
+          else
+            mmDisplay.Append('');
+          LastLine := mmDisplay.Lines.Count - 1;
+          Inc(i, 1);
+          j := i;
+        end
+        else
+          Inc(i);
+      end;
+      mmDisplay.Lines[LastLine] :=
+        mmDisplay.Lines[LastLine] + RawSerialDataMsg.AsString.Substring(j - 1);
       AutoScrollHack;
       mmDisplay.Lines.EndUpdate;
     end;

@@ -31,20 +31,29 @@ unit uUSBasp;
 interface
 
 uses
-  Classes, SysUtils, Forms, StdCtrls, syncobjs, usbasp_uart;
+  Classes, SysUtils, syncobjs, uUSBaspDefinitions, usbasp_uart;
 
 const
-  TSerialBaudRate: array[0..13] of integer =
+  TUARTBaudRate: array[0..13] of integer =
     (300, 600, 1200, 2400, 4800, 9600, 14400, 19200, 28800, 31250, 38400,
     57600, 74880, 115200);
 
+  TUARTDataBits: array[0..4] of integer =
+    (USBASP_UART_BYTES_5B, USBASP_UART_BYTES_6B, USBASP_UART_BYTES_7B,
+    USBASP_UART_BYTES_8B, USBASP_UART_BYTES_9B);
+  TUARTParity: array[0..2] of integer =
+    (USBASP_UART_PARITY_NONE, USBASP_UART_PARITY_EVEN, USBASP_UART_PARITY_ODD);
+  TUARTStopBit: array[0..1] of integer = (USBASP_UART_STOP_1BIT, USBASP_UART_STOP_2BIT);
+
 type
+
   TUARTReceive = procedure(const AMsg: string) of object;
 
   TWriteBuffer = array of byte;
 
   TRawSerialDataMsg = record
     AsString: string;
+    BreakChar: char;
   end;
   PRawSerialDataMsg = ^TRawSerialDataMsg;
 
@@ -70,7 +79,7 @@ type
     destructor Destroy; override;
     function Connect(const AUSBaspDeviceID: byte = 0): boolean;
     function Disconnect: boolean;
-    function UARTOpen(const ABaudRate: integer): boolean;
+    function UARTOpen(const ABaudRate, ADataBits, AParity, AStopBits: integer): boolean;
     function UARTClose: boolean;
     procedure LoadUSBaspDevices;
     procedure UARTWrite(const ABuffer: string);
@@ -144,7 +153,8 @@ begin
   Result := FConnected;
 end;
 
-function TUSBasp.UARTOpen(const ABaudRate: integer): boolean;
+function TUSBasp.UARTOpen(const ABaudRate, ADataBits, AParity, AStopBits:
+  integer): boolean;
 var
   iRealBaud: integer;
 begin
@@ -152,8 +162,7 @@ begin
   begin
     iRealBaud := ABaudRate;
     FLastUsbError := usbasp_uart_enable(FUSBaspDevices[FUSBaspID]^.Handle,
-      iRealBaud, USBASP_UART_BYTES_8B or USBASP_UART_STOP_1BIT or
-      USBASP_UART_PARITY_NONE);
+      iRealBaud, ADataBits or AStopBits or AParity);
     FUARTOpened := True;
     FThreadReceive := TUSBaspReceiveThread.Create(Self);
     FThreadSend := TUSBaspSendThread.Create(Self, FWriteBufferLock);

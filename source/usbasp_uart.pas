@@ -31,52 +31,7 @@ unit usbasp_uart;
 interface
 
 uses
-  Classes, libusb;
-
-const
-  USBASP_UART_PARITY_MASK = %11;
-  USBASP_UART_PARITY_NONE = %00;
-  USBASP_UART_PARITY_EVEN = %01;
-  USBASP_UART_PARITY_ODD = %10;
-
-  USBASP_UART_STOP_MASK = %100;
-  USBASP_UART_STOP_1BIT = %000;
-  USBASP_UART_STOP_2BIT = %100;
-
-  USBASP_UART_BYTES_MASK = %111000;
-  USBASP_UART_BYTES_5B = %000000;
-  USBASP_UART_BYTES_6B = %001000;
-  USBASP_UART_BYTES_7B = %010000;
-  USBASP_UART_BYTES_8B = %011000;
-  USBASP_UART_BYTES_9B = %100000;
-
-type
-
-  { TUSBaspDevice }
-
-  TUSBaspDevice = record
-    USBDevice: plibusb_device;
-    Handle: plibusb_device_handle;
-    ProductName: string[255];
-    Manufacturer: string[255];
-    SerialNumber: string[255];
-    HasUart: boolean;
-    HasTPI: boolean;
-    Interface0Claimed: boolean;
-  end;
-  PUSBaspDevice = ^TUSBaspDevice;
-
-  { TUSBaspDeviceList }
-
-  TUSBaspDeviceList = class(TList)
-  private
-    function Get(Index: integer): PUSBaspDevice;
-  public
-    destructor Destroy; override;
-    function Add(Value: PUSBaspDevice): integer;
-    procedure FreeItems;
-    property Items[Index: integer]: PUSBaspDevice read Get; default;
-  end;
+  libusb, uUSBaspDefinitions;
 
 function usbasp_devices(var AUSBaspDeviceList: TUSBaspDeviceList): integer;
 function usbasp_initialization: integer;
@@ -95,30 +50,6 @@ function usbasp_uart_write(const AUSBaspHandle: plibusb_device_handle;
   ABuff: PChar; len: integer): integer;
 
 implementation
-
-const
-  USB_ERROR_NOTFOUND = 1;
-  USB_ERROR_ACCESS = 2;
-  USB_ERROR_IO = 3;
-
-  USBASP_SHARED_VID = $16C0;
-  USBASP_SHARED_PID = $05DC;
-
-  USBASP_FUNC_UART_CONFIG = 60;
-  USBASP_FUNC_UART_FLUSHTX = 61;
-  USBASP_FUNC_UART_FLUSHRX = 62;
-  USBASP_FUNC_UART_DISABLE = 63;
-  USBASP_FUNC_UART_TX = 64;
-  USBASP_FUNC_UART_RX = 65;
-  USBASP_FUNC_UART_TX_FREE = 66;
-  USBASP_FUNC_UART_RX_FREE = 67;
-
-  USBASP_FUNC_GETCAPABILITIES = 127;
-
-  USBASP_CAP_0_TPI = 1;
-  USBASP_CAP_6_UART = (1 shl 6);
-
-  USBASP_NO_CAPS = (-4);
 
 type
   pplibusb_device = ^plibusb_device;
@@ -327,38 +258,11 @@ begin
     locDummy, PChar(@locDummy[0]), 0);
 end;
 
-{ TUSBaspDeviceList }
-
-function TUSBaspDeviceList.Get(Index: integer): PUSBaspDevice;
-begin
-  Result := PUSBaspDevice(inherited Get(Index));
-end;
-
-procedure TUSBaspDeviceList.FreeItems;
-var
-  i: integer;
-begin
-  for i := 0 to Count - 1 do
-    FreeMem(Items[i]);
-end;
-
-destructor TUSBaspDeviceList.Destroy;
-begin
-  FreeItems;
-  inherited Destroy;
-end;
-
-function TUSBaspDeviceList.Add(Value: PUSBaspDevice): integer;
-begin
-  Result := inherited Add(Value);
-end;
-
-initialization
-  //locResult := libusb_hotplug_register_callback(
-  //  GlobalContext, libusb_hotplug_event(byte(LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED) or
-  //  byte(LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT)), LIBUSB_HOTPLUG_NO_FLAGS,
-  //  USBASP_SHARED_VID, USBASP_SHARED_PID, LIBUSB_HOTPLUG_MATCH_ANY,
-  //  @usbasp_hotplug_callback, nil, HotPlugCallbackHandle)
-
+//initialization
+//  locResult := libusb_hotplug_register_callback(
+//    GlobalContext, libusb_hotplug_event(byte(LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED) or
+//    byte(LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT)), LIBUSB_HOTPLUG_NO_FLAGS,
+//    USBASP_SHARED_VID, USBASP_SHARED_PID, LIBUSB_HOTPLUG_MATCH_ANY,
+//    @usbasp_hotplug_callback, nil, HotPlugCallbackHandle)
 
 end.

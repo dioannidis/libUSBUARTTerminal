@@ -73,7 +73,7 @@ const
   USBaspBufferSize = 254;
 var
   USBaspBuffer: array of byte;
-  RcvLen, LastUSBError: integer;
+  RcvLen: integer;
   RawSerialData: TBytes;
 begin
   SetLength(USBaspBuffer, USBaspBufferSize);
@@ -120,12 +120,8 @@ end;
 { TUSBaspSendThread }
 
 procedure TUSBaspSendThread.Execute;
-const
-  USBaspBufferSize = 254;
 var
-  USBaspBuffer: array of byte;
-  RcvLen, LastUSBError: integer;
-  RawSerialData: TBytes;
+  RcvLen: integer;
 begin
   while not terminated do
   begin
