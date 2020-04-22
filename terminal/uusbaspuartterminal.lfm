@@ -62,10 +62,10 @@ object frmMain: TfrmMain
     TabOrder = 3
   end
   object cbxUSBaspDevice: TComboBox
-    Left = 613
+    Left = 600
     Height = 23
     Top = 24
-    Width = 152
+    Width = 165
     ItemHeight = 15
     OnCloseUp = cbxUSBaspDeviceCloseUp
     OnDropDown = cbxUSBaspDeviceDropDown
@@ -73,11 +73,11 @@ object frmMain: TfrmMain
     TabOrder = 4
   end
   object lblUSBaspDevice: TLabel
-    Left = 613
+    Left = 600
     Height = 15
     Top = 8
-    Width = 35
-    Caption = 'Device'
+    Width = 82
+    Caption = 'USBasp Devices'
     ParentColor = False
   end
   object gbUART: TGroupBox
@@ -283,7 +283,7 @@ object frmMain: TfrmMain
     end
   end
   object btnConnect: TButton
-    Left = 613
+    Left = 600
     Height = 31
     Top = 56
     Width = 75
@@ -319,7 +319,7 @@ object frmMain: TfrmMain
     PoweredBy.About.Description.Strings = (
       'Component that shows a Powered By graphic.'#13#10'Use method ShowPoweredByForm in your form.create()'#13#10'to use the component'
     )
-    PoweredBy.About.Title = 'About About About About About About About About About About About About About About PoweredBy component'
+    PoweredBy.About.Title = 'About About About About About About About About About About About About About About About PoweredBy component'
     PoweredBy.About.Height = 280
     PoweredBy.About.Width = 400
     PoweredBy.About.Font.Color = clNavy

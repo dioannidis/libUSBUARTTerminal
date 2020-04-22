@@ -115,14 +115,14 @@ procedure TfrmMain.btnOpenClick(Sender: TObject);
 var
   s: string;
 begin
-  if FUSBasp.Connected and FUSBasp.SupportUART and not FUSBasp.UARTOpened then
+  if FUSBasp.Connected and FUSBasp.USBaspDevice.HasUart and not FUSBasp.UARTOpened then
     FUSBasp.UARTOpen(TSerialBaudRate[cbxBaudRate.ItemIndex]);
   ToggleGUI;
 end;
 
 procedure TfrmMain.btnCloseClick(Sender: TObject);
 begin
-  if FUSBasp.Connected and FUSBasp.SupportUART and FUSBasp.UARTOpened then
+  if FUSBasp.Connected and FUSBasp.USBaspDevice.HasUart and FUSBasp.UARTOpened then
     FUSBasp.UARTClose;
   ToggleGUI;
 end;
@@ -169,8 +169,7 @@ begin
   begin
     for i := 0 to FUSBasp.USBaspDevices.Count - 1 do
       cbxUSBaspDevice.AddItem(FUSBasp.USBaspDevices[i]^.ProductName +
-        ':' + FUSBasp.USBaspDevices[i]^.SerialNumber + ' [' +
-        FUSBasp.USBaspDevices[i]^.Manufacturer + ']', nil);
+      ' [' + FUSBasp.USBaspDevices[i]^.Manufacturer + ']', nil);
     cbxUSBaspDevice.ItemIndex := 0;
   end
   else
@@ -184,6 +183,7 @@ end;
 procedure TfrmMain.cbxWordWrapChange(Sender: TObject);
 begin
   mmDisplay.WordWrap := cbxWordWrap.State = cbChecked;
+  mmDisplay.Clear;
 end;
 
 procedure TfrmMain.edtSendKeyPress(Sender: TObject; var Key: char);
@@ -199,7 +199,7 @@ end;
 
 procedure TfrmMain.btnSendClick(Sender: TObject);
 begin
-  FUSBasp.SendBuffer := edtSend.Text;
+  FUSBasp.UARTWrite(edtSend.Text);
   edtSend.Text := '';
 end;
 
@@ -264,7 +264,7 @@ begin
   cbxUSBaspDevice.Enabled := not FUSBasp.Connected;
   btnConnect.Enabled := (FUSBasp.USBaspID <> 255) and not FUSBasp.Connected;
   btnDisconnect.Enabled := (FUSBasp.USBaspID <> 255) and not btnConnect.Enabled;
-  gbUART.Enabled := (FUSBasp.USBaspID <> 255) and FUSBasp.SupportUART and
+  gbUART.Enabled := (FUSBasp.USBaspID <> 255) and FUSBasp.USBaspDevice.HasUart and
     FUSBasp.Connected;
   gbRuntimeSettings.Enabled := gbUART.Enabled;
   gbNoRuntimeSettings.Enabled := not FUSBasp.UARTOpened and gbUART.Enabled;
