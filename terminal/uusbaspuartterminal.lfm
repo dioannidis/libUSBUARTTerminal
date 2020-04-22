@@ -403,7 +403,11 @@ object frmMain: TfrmMain
     PoweredBy.About.Description.Strings = (
       'Component that shows a Powered By graphic.'#13#10'Use method ShowPoweredByForm in your form.create()'#13#10'to use the component'
     )
+<<<<<<< HEAD
     PoweredBy.About.Title = 'About About About About About About About About About About About About About About About PoweredBy component'
+=======
+    PoweredBy.About.Title = 'About About About About About About About About About About About About About About PoweredBy component'
+>>>>>>> a925494dbc9358200ad8a498c35f8af52091cf2b
     PoweredBy.About.Height = 280
     PoweredBy.About.Width = 400
     PoweredBy.About.Font.Color = clNavy
