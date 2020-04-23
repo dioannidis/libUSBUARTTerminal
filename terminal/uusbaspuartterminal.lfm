@@ -16,7 +16,7 @@ object frmMain: TfrmMain
   OnKeyPress = FormKeyPress
   Position = poScreenCenter
   SessionProperties = 'cbxBaudRate.ItemIndex;cbxLineBreak.ItemIndex;cbxWordWrap.Checked;ckbAutoScroll.Checked;ckbTimeStamp.Checked;Height;Left;medtMemoBufferLines.Text;Top;Width;cbxDataBits.ItemIndex;cbxParity.ItemIndex;cbxStopBits.ItemIndex'
-  LCLVersion = '2.1.0.0'
+  LCLVersion = '2.0.8.0'
   object edtSend: TEdit
     Left = 8
     Height = 23
@@ -54,7 +54,6 @@ object frmMain: TfrmMain
     Anchors = [akTop, akLeft, akRight, akBottom]
     Color = clBackground
     Font.Color = clLime
-    Font.Name = 'Terminal'
     OnChange = mmDisplayChange
     ParentFont = False
     ReadOnly = True
@@ -432,8 +431,8 @@ object frmMain: TfrmMain
     OnClick = sbtnRefreshClick
   end
   object AppMainMenu: TMainMenu
-    Left = 152
-    Top = 208
+    left = 152
+    top = 208
     object miFile: TMenuItem
       Caption = 'File'
       object miExit: TMenuItem
@@ -450,7 +449,7 @@ object frmMain: TfrmMain
     PoweredBy.About.Description.Strings = (
       'Component that shows a Powered By graphic.'#13#10'Use method ShowPoweredByForm in your form.create()'#13#10'to use the component'
     )
-    PoweredBy.About.Title = 'About About PoweredBy component'
+    PoweredBy.About.Title = 'About About About PoweredBy component'
     PoweredBy.About.Height = 280
     PoweredBy.About.Width = 400
     PoweredBy.About.Font.Color = clNavy
@@ -471,12 +470,12 @@ object frmMain: TfrmMain
     TitleStyle = saApplication
     UserTitle = 'USBasp UART Terminal'
     ShowDescription = True
-    Left = 48
-    Top = 208
+    left = 48
+    top = 208
   end
   object AppXMLPropStorage: TXMLPropStorage
     StoredValues = <>
-    Left = 264
-    Top = 210
+    left = 264
+    top = 210
   end
 end
