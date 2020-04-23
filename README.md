@@ -22,8 +22,8 @@
   
   Release date 23/04/2020
   
-*   [USBaspUARTTerminal-win64-binary.zip](https://scm.nephelae.eu/attachments/c58852b3-6143-438a-bc60-4298f666b572)  
-*   [USBaspUARTTerminal-win32-binary.zip](https://scm.nephelae.eu/attachments/4b68e661-7f5c-450a-a095-0cec0f2e6c7b)
+*   [USBaspUARTTerminal-win64-binary.zip](https://scm.nephelae.eu/attachments/50e7c9e7-2438-4c80-a562-89d121fadced)  
+*   [USBaspUARTTerminal-win32-binary.zip](https://scm.nephelae.eu/attachments/0058e797-f30d-452e-9ee2-1345ffae7569)
 
 
 -----
