@@ -119,8 +119,6 @@ begin
     Result := libusb_release_interface(AUSBasp^.Handle, 0);
   libusb_close(AUSBasp^.Handle);
   AUSBasp^.Handle := nil;
-  AUSBasp^.HasUart := False;
-  AUSBasp^.HasTPI := False;
   AUSBasp^.Interface0Claimed := False;
 end;
 
