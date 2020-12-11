@@ -20,10 +20,12 @@
   
   
   
-  Release date 23/04/2020
+  Release date 11/12/2020
   
-*   [USBaspUARTTerminal-win64-binary.zip](https://scm.nephelae.eu/attachments/50e7c9e7-2438-4c80-a562-89d121fadced)  
-*   [USBaspUARTTerminal-win32-binary.zip](https://scm.nephelae.eu/attachments/0058e797-f30d-452e-9ee2-1345ffae7569)
+  Upgrade libusb to 1.0.24.  
+  
+*   [USBaspUARTTerminal-0.6.0-win64-binary.zip](https://scm.nephelae.eu/attachments/1c4859d9-e56d-45ac-ada4-79609f06f263)  
+*   [USBaspUARTTerminal-0.6.0-win32-binary.zip](https://scm.nephelae.eu/attachments/8934a05d-6487-4924-a45b-0439b21e904e)
 
 
 -----
