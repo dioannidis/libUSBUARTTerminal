@@ -6,7 +6,7 @@ unit uusbaspuartterminal;
 
   libUSB USBasp UART Terminal GUI.
 
-  Copyright (C) 2020 Dimitrios Chr. Ioannidis.
+  Copyright (C) 2020 - 2022 Dimitrios Chr. Ioannidis.
     Nephelae - https://www.nephelae.eu
 
   https://www.nephelae.eu/

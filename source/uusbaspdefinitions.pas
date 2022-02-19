@@ -6,7 +6,7 @@ unit uUSBaspDefinitions;
 
   libUSB USBasp UART library definitions.
 
-  Copyright (C) 2020 Dimitrios Chr. Ioannidis.
+  Copyright (C) 2020 - 2022 Dimitrios Chr. Ioannidis.
     Nephelae - https://www.nephelae.eu
 
   https://www.nephelae.eu/
