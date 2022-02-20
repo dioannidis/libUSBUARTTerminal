@@ -162,7 +162,8 @@ function TUSBasp.UARTOpen(const ABaudRate, ADataBits, AParity, AStopBits:
 var
   iRealBaud: integer;
 begin
-  if FConnected and FUSBaspDeviceSelected.HasUart and not FUARTOpened then
+  if FConnected and (FUSBaspDeviceSelected.HasUart or FUSBaspDeviceSelected.HasHIDUart)
+     and not FUARTOpened then
   begin
     iRealBaud := ABaudRate;
     FLastUsbError := usbasp_uart_enable(FUSBaspDevices[FUSBaspID],
