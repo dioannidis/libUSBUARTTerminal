@@ -138,9 +138,11 @@ begin
     AppStatusBar.SimpleText :=
       'Product: [' + FUSBasp.USBaspDevice.ProductName + '] Manufacturer: [' +
       FUSBasp.USBaspDevice.Manufacturer + '] Serial number: [' +
-      FUSBasp.USBaspDevice.SerialNumber + '] TPI: [' +
+      FUSBasp.USBaspDevice.SerialNumber + '] Crystal: [' +
+      FUSBasp.USBaspDevice.FOsc.ToString() + ' Hz] TPI: [' +
       BoolToStr(FUSBasp.USBaspDevice.HasTPI, 'On', 'Off') + '] UART: [' +
-      BoolToStr(FUSBasp.USBaspDevice.HasUart, 'On', 'Off') + ']';
+      BoolToStr(FUSBasp.USBaspDevice.HasUart, 'On', 'Off') + '] HID UART: [' +
+      BoolToStr(FUSBasp.USBaspDevice.HasHIDUart, 'On', 'Off') + ']';
   end
   else
     AppStatusBar.SimpleText := 'No USBasp Device Found';
@@ -273,7 +275,8 @@ begin
   btnDisconnect.Enabled := (FUSBasp.USBaspID <> USBaspIDNotFound) and
     not btnConnect.Enabled;
   gbUART.Enabled := (FUSBasp.USBaspID <> USBaspIDNotFound) and
-    FUSBasp.USBaspDevice.HasUart and FUSBasp.Connected;
+    (FUSBasp.USBaspDevice.HasUart or FUSBasp.USBaspDevice.HasHIDUart) and
+    FUSBasp.Connected;
   gbRuntimeSettings.Enabled := gbUART.Enabled;
   gbNoRuntimeSettings.Enabled := not FUSBasp.UARTOpened and gbUART.Enabled;
   btnOpen.Enabled := gbUART.Enabled and not FUSBasp.UARTOpened;
