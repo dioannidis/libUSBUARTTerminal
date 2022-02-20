@@ -1,7 +1,7 @@
 object frmMain: TfrmMain
-  Left = 529
+  Left = 67
   Height = 560
-  Top = 167
+  Top = 428
   Width = 785
   Caption = 'Form2'
   ClientHeight = 540
@@ -325,7 +325,7 @@ object frmMain: TfrmMain
         Left = 16
         Height = 19
         Top = 60
-        Width = 81
+        Width = 80
         Caption = 'TimeStamp'
         TabOrder = 1
       end
@@ -449,7 +449,7 @@ object frmMain: TfrmMain
     PoweredBy.About.Description.Strings = (
       'Component that shows a Powered By graphic.'#13#10'Use method ShowPoweredByForm in your form.create()'#13#10'to use the component'
     )
-    PoweredBy.About.Title = 'About About About PoweredBy component'
+    PoweredBy.About.Title = 'About About About About PoweredBy component'
     PoweredBy.About.Height = 280
     PoweredBy.About.Width = 400
     PoweredBy.About.Font.Color = clNavy

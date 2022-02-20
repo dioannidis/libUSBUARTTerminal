@@ -40,8 +40,8 @@ function usbasp_finalization: integer;
 function usbasp_open(const AUSBasp: PUSBaspDevice): integer;
 function usbasp_close(const AUSBasp: PUSBaspDevice): integer;
 
-function usbasp_uart_enable(const AUSBaspHandle: plibusb_device_handle;
-  var ABaud: integer; AFlags: integer): integer;
+function usbasp_uart_enable(const AUSBasp: PUSBaspDevice;
+  var ARealBaud: integer; AFlags: integer): integer;
 function usbasp_uart_disable(const AUSBasp: PUSBaspDevice): integer;
 
 function usbasp_uart_read(const AUSBaspHandle: plibusb_device_handle;
@@ -54,6 +54,13 @@ implementation
 type
   pplibusb_device = ^plibusb_device;
   ppplibusb_device = ^pplibusb_device;
+
+type
+  TCapabilities = record
+    case boolean of
+      true: (a:longword);
+      false: (bytes:array [0..3] of byte);
+  end;
 
 var
   GlobalContext: plibusb_context;
@@ -155,8 +162,12 @@ function usbasp_devices(var AUSBaspDeviceList: TUSBaspDeviceList): integer;
       GetDescriptorString(AUSBaspHandle, AUSBDeviceDescriptor.iSerialNumber);
 
     Caps := usbasp_uart_capabilities(AUSBaspHandle);
-    tmpUSBaspDevice^.HasUart := (Caps and USBASP_CAP_6_UART) <> 0;
-    tmpUSBaspDevice^.HasTPI := (Caps and USBASP_CAP_0_TPI) <> 0;
+    tmpUSBaspDevice^.HasTPI     := (TCapabilities(Caps).bytes[0] and USBASP_CAP_0_TPI) <> 0;
+    tmpUSBaspDevice^.HasUart    := (TCapabilities(Caps).bytes[0] and USBASP_CAP_6_UART) <> 0;
+    tmpUSBaspDevice^.HasHIDUart := (TCapabilities(Caps).bytes[0] and USBASP_CAP_7_HID_UART) <> 0;
+    tmpUSBaspDevice^.FOsc       := (TCapabilities(Caps).bytes[1]) * 1000000;
+    if tmpUSBaspDevice^.FOsc = 0 then
+      tmpUSBaspDevice^.FOsc := 12000000;
 
     Result := tmpUSBaspDevice;
   end;
@@ -200,24 +211,21 @@ end;
 //  Result := 0;
 //end;
 
-function usbasp_uart_enable(const AUSBaspHandle: plibusb_device_handle;
-  var ABaud: integer; AFlags: integer): integer;
+function usbasp_uart_enable(const AUSBasp: PUSBaspDevice;
+  var ARealBaud: integer; AFlags: integer): integer;
 var
-  FOSC: integer = 12000000;
-  Presc, RealBaud: integer;
+  Prescaler: integer;
   UARTConfig: array [0..3] of byte;
 begin
-  Presc := FOSC div 8 div ABaud - 1;
-  RealBaud := FOSC div 8 div (Presc + 1);
-
-  ABaud := RealBaud;
+  Prescaler := AUSBasp^.FOsc div 8 div ARealBaud - 1;
+  ARealBaud := AUSBasp^.FOsc div 8 div (Prescaler + 1);
 
   FillChar(UARTConfig, SizeOf(UARTConfig), 0);
-  UARTConfig[1] := Presc shr 8;
-  UARTConfig[0] := Presc and $FF;
+  UARTConfig[0] := Prescaler and $FF;
+  UARTConfig[1] := Prescaler shr 8;
   UARTConfig[2] := AFlags and $FF;
 
-  Result := usbasp_uart_transmit(AUSBaspHandle, 1, USBASP_FUNC_UART_CONFIG,
+  Result := usbasp_uart_transmit(AUSBasp^.Handle, 1, USBASP_FUNC_UART_CONFIG,
     UARTConfig, PChar(@locDummy[0]), 0);
 end;
 

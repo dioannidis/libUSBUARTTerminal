@@ -165,7 +165,7 @@ begin
   if FConnected and FUSBaspDeviceSelected.HasUart and not FUARTOpened then
   begin
     iRealBaud := ABaudRate;
-    FLastUsbError := usbasp_uart_enable(FUSBaspDevices[FUSBaspID]^.Handle,
+    FLastUsbError := usbasp_uart_enable(FUSBaspDevices[FUSBaspID],
       iRealBaud, ADataBits or AStopBits or AParity);
     FUARTOpened := True;
     FThreadReceive := TUSBaspReceiveThread.Create(Self);
