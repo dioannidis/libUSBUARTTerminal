@@ -31,7 +31,7 @@ unit uUSBasp;
 interface
 
 uses
-  Classes, SysUtils, syncobjs, uUSBaspDefinitions, usbasp_uart;
+  Classes, SysUtils, syncobjs, uUSBaspDefinitions, usbasp_uart, usbasp_uart_hid;
 
 const
   TUARTBaudRate: array[0..13] of integer =
@@ -177,7 +177,9 @@ end;
 
 function TUSBasp.UARTClose: boolean;
 begin
-  if FConnected and FUSBaspDeviceSelected.HasUart and FUARTOpened then
+  if FConnected and
+     (FUSBaspDeviceSelected.HasUart or FUSBaspDeviceSelected.HasHIDUart) and
+     FUARTOpened then
   begin
     FThreadReceive.Terminate;
     FThreadReceive.WaitFor;
