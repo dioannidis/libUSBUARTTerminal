@@ -1,8 +1,8 @@
 ## libUSBUARTTerminal
 
   The libUSBUARTTerminal is a uart client for 
-  - the USBasp firmware with uart support using control transfers made by the user [akrasuski1](https://github.com/akrasuski1) on his github [repository](https://github.com/akrasuski1/usbasp-uart)
-  - the USBasp firmware with uart support using HID https://github.com/dioannidis/usbasp
+  - until release 0.6.1 the USBasp firmware with uart support using control transfers made by the user [akrasuski1](https://github.com/akrasuski1) on his github [repository](https://github.com/akrasuski1/usbasp-uart)
+  - from release 0.7.0 the USBasp firmware with uart support using HID https://github.com/dioannidis/usbasp
   
   It is written in [Free Pascal](https://www.freepascal.org/) and [Lazarus](https://www.lazarus-ide.org/).
    

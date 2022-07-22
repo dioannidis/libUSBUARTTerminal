@@ -1,11 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CONFIG>
   <ProjectOptions>
-    <Version Value="11"/>
+    <Version Value="12"/>
     <PathDelim Value="\"/>
     <General>
+      <Flags>
+        <CompatibilityMode Value="True"/>
+      </Flags>
       <SessionStorage Value="InProjectDir"/>
-      <MainUnit Value="0"/>
       <Title Value="USBasp UART Terminal"/>
       <Scaled Value="True"/>
       <ResourceType Value="res"/>
@@ -15,10 +17,9 @@
     <VersionInfo>
       <UseVersionInfo Value="True"/>
       <AutoIncrementBuild Value="True"/>
-      <MinorVersionNr Value="6"/>
-      <RevisionNr Value="1"/>
-      <BuildNr Value="28"/>
-      <StringTable FileDescription="USBasp UART Terminal" InternalName="prjUSBaspUARTTerminal" LegalCopyright="© 2020 - 2022 Dimitrios Chr. Ioannidis" LegalTrademarks="© 2020 - 2022 Dimitrios Chr. Ioannidis" OriginalFilename="prjUSBaspUARTTerminal.exe" ProductName="USBasp UART Terminal" ProductVersion="0.5"/>
+      <MinorVersionNr Value="7"/>
+      <BuildNr Value="17"/>
+      <StringTable FileDescription="FPUSBasp GUI UART Terminal" InternalName="prjFPUSBaspUARTTerminal" LegalCopyright="© 2022 Dimitrios Chr. Ioannidis" LegalTrademarks="© 2022 Dimitrios Chr. Ioannidis" OriginalFilename="prjFPUSBaspUARTTerminal.exe" ProductName="FPUSBasp GUI UART Terminal" ProductVersion="0.5"/>
     </VersionInfo>
     <BuildModes Count="4">
       <Item1 Name="Debug" Default="True"/>
@@ -143,13 +144,17 @@
         <Mode0 Name="default"/>
       </Modes>
     </RunParams>
-    <RequiredPackages Count="2">
+    <RequiredPackages Count="3">
       <Item1>
         <PackageName Value="splashabout"/>
       </Item1>
       <Item2>
-        <PackageName Value="LCL"/>
+        <PackageName Value="hidapi_pkg"/>
+        <MinVersion Minor="4" Valid="True"/>
       </Item2>
+      <Item3>
+        <PackageName Value="LCL"/>
+      </Item3>
     </RequiredPackages>
     <Units Count="2">
       <Unit0>
@@ -157,11 +162,12 @@
         <IsPartOfProject Value="True"/>
       </Unit0>
       <Unit1>
-        <Filename Value="uusbaspuartterminal.pas"/>
+        <Filename Value="fpusbaspguiuartterminal.pas"/>
         <IsPartOfProject Value="True"/>
         <ComponentName Value="frmMain"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
+        <UnitName Value="FPUSBaspGUIUARTTerminal"/>
       </Unit1>
     </Units>
   </ProjectOptions>
@@ -169,7 +175,7 @@
     <Version Value="11"/>
     <PathDelim Value="\"/>
     <Target>
-      <Filename Value="bin\$(TargetCPU)-$(TargetOS)\$(BuildMode)\prjUSBaspUARTTerminal"/>
+      <Filename Value="bin\$(TargetCPU)-$(TargetOS)\$(BuildMode)\prjFPUSBaspUARTTerminal"/>
     </Target>
     <SearchPaths>
       <IncludeFiles Value="$(ProjOutDir)"/>

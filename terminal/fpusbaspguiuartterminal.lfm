@@ -1,0 +1,465 @@
+object frmMain: TfrmMain
+  Left = 392
+  Height = 560
+  Top = 225
+  Width = 785
+  Caption = 'Form2'
+  ClientHeight = 540
+  ClientWidth = 785
+  Constraints.MinHeight = 560
+  Constraints.MinWidth = 785
+  DefaultMonitor = dmPrimary
+  KeyPreview = True
+  Menu = AppMainMenu
+  OnCreate = FormCreate
+  OnDestroy = FormDestroy
+  OnKeyPress = FormKeyPress
+  Position = poScreenCenter
+  SessionProperties = 'cbxBaudRate.ItemIndex;cbxLineBreak.ItemIndex;cbxWordWrap.Checked;ckbAutoScroll.Checked;ckbTimeStamp.Checked;Height;Left;medtMemoBufferLines.Text;Top;Width;cbxDataBits.ItemIndex;cbxParity.ItemIndex;cbxStopBits.ItemIndex'
+  LCLVersion = '2.2.2.0'
+  object edtSend: TEdit
+    Left = 8
+    Height = 23
+    Top = 160
+    Width = 672
+    Anchors = [akTop, akLeft, akRight]
+    Enabled = False
+    OnKeyPress = edtSendKeyPress
+    TabOrder = 0
+  end
+  object btnSend: TButton
+    Left = 690
+    Height = 23
+    Top = 160
+    Width = 75
+    Anchors = [akTop, akRight]
+    Caption = 'Send'
+    Enabled = False
+    OnClick = btnSendClick
+    TabOrder = 1
+  end
+  object AppStatusBar: TStatusBar
+    Left = 0
+    Height = 23
+    Top = 537
+    Width = 785
+    Panels = <>
+  end
+  object mmDisplay: TMemo
+    Left = 0
+    Height = 349
+    Top = 188
+    Width = 785
+    Align = alBottom
+    Anchors = [akTop, akLeft, akRight, akBottom]
+    Color = clBackground
+    Font.CharSet = ANSI_CHARSET
+    Font.Color = clLime
+    Font.Height = -11
+    Font.Name = 'DejaVu Sans Mono'
+    Font.Pitch = fpFixed
+    Font.Quality = fqDraft
+    OnChange = mmDisplayChange
+    ParentFont = False
+    ReadOnly = True
+    ScrollBars = ssAutoBoth
+    TabOrder = 3
+  end
+  object cbxUSBaspDevice: TComboBox
+    Left = 600
+    Height = 23
+    Top = 24
+    Width = 136
+    ItemHeight = 15
+    ItemIndex = 0
+    Items.Strings = (
+      'Select USBasp'
+    )
+    OnChange = cbxUSBaspDeviceChange
+    Style = csDropDownList
+    TabOrder = 4
+    Text = 'Select USBasp'
+  end
+  object lblUSBaspDevice: TLabel
+    Left = 600
+    Height = 15
+    Top = 8
+    Width = 82
+    Caption = 'USBasp Devices'
+    ParentColor = False
+  end
+  object gbUART: TGroupBox
+    Left = 8
+    Height = 144
+    Top = 8
+    Width = 580
+    Caption = 'UART'
+    ClientHeight = 124
+    ClientWidth = 576
+    TabOrder = 5
+    object gbNoRuntimeSettings: TGroupBox
+      Left = 88
+      Height = 112
+      Top = 0
+      Width = 272
+      ClientHeight = 92
+      ClientWidth = 268
+      TabOrder = 0
+      object lblLineBreak: TLabel
+        Left = 160
+        Height = 15
+        Top = 0
+        Width = 54
+        Caption = 'Line Break'
+        ParentColor = False
+      end
+      object cbxLineBreak: TComboBoxEx
+        Left = 160
+        Height = 22
+        Top = 17
+        Width = 100
+        ItemHeight = 16
+        ItemsEx = <        
+          item
+            Caption = 'No Line Break'
+          end        
+          item
+            Caption = 'Only CR'
+          end        
+          item
+            Caption = 'Only LF'
+          end        
+          item
+            Caption = 'Both CR & LF'
+          end>
+        ItemIndex = 3
+        Style = csExDropDownList
+        TabOrder = 0
+      end
+      object cbxBaudRate: TComboBoxEx
+        Left = 8
+        Height = 22
+        Top = 17
+        Width = 63
+        ItemHeight = 16
+        ItemsEx = <        
+          item
+            Caption = '300'
+          end        
+          item
+            Caption = '600'
+          end        
+          item
+            Caption = '1200'
+          end        
+          item
+            Caption = '2400'
+          end        
+          item
+            Caption = '4800'
+          end        
+          item
+            Caption = '9600'
+          end        
+          item
+            Caption = '14400'
+          end        
+          item
+            Caption = '19200'
+          end        
+          item
+            Caption = '28800'
+          end        
+          item
+            Caption = '31250'
+          end        
+          item
+            Caption = '38400'
+          end        
+          item
+            Caption = '57600'
+          end        
+          item
+            Caption = '74880'
+          end        
+          item
+            Caption = '115200'
+          end>
+        ItemIndex = 5
+        Style = csExDropDownList
+        TabOrder = 1
+      end
+      object lblBaud: TLabel
+        Left = 7
+        Height = 15
+        Top = 0
+        Width = 53
+        Caption = 'Baud Rate'
+        ParentColor = False
+      end
+      object medtMemoBufferLines: TMaskEdit
+        Left = 196
+        Height = 23
+        Top = 59
+        Width = 62
+        Alignment = taRightJustify
+        MaxLength = 3
+        TabOrder = 2
+        OnChange = medtMemoBufferLinesChange
+        EditMask = '990;0;_'
+        Text = '150'
+        SpaceChar = '_'
+      end
+      object lblMemoBufferLines: TLabel
+        Left = 196
+        Height = 15
+        Top = 42
+        Width = 62
+        Caption = 'Lines Buffer'
+        ParentColor = False
+      end
+      object cbxDataBits: TComboBoxEx
+        Left = 80
+        Height = 22
+        Top = 17
+        Width = 63
+        ItemHeight = 16
+        ItemsEx = <        
+          item
+            Caption = '5'
+          end        
+          item
+            Caption = '6'
+          end        
+          item
+            Caption = '7'
+          end        
+          item
+            Caption = '8'
+          end        
+          item
+            Caption = '9'
+          end>
+        ItemIndex = 3
+        Style = csExDropDownList
+        TabOrder = 3
+      end
+      object cbxParity: TComboBoxEx
+        Left = 8
+        Height = 22
+        Top = 60
+        Width = 63
+        ItemHeight = 16
+        ItemsEx = <        
+          item
+            Caption = 'None'
+          end        
+          item
+            Caption = 'Even'
+          end        
+          item
+            Caption = 'Odd'
+          end>
+        ItemIndex = 0
+        Style = csExDropDownList
+        TabOrder = 4
+      end
+      object cbxStopBits: TComboBoxEx
+        Left = 80
+        Height = 22
+        Top = 60
+        Width = 63
+        ItemHeight = 16
+        ItemsEx = <        
+          item
+            Caption = '1'
+          end        
+          item
+            Caption = '2'
+          end>
+        ItemIndex = 0
+        Style = csExDropDownList
+        TabOrder = 5
+      end
+      object lblDataBits: TLabel
+        Left = 80
+        Height = 15
+        Top = 0
+        Width = 46
+        Caption = 'Data Bits'
+        ParentColor = False
+      end
+      object lblParity: TLabel
+        Left = 8
+        Height = 15
+        Top = 42
+        Width = 30
+        Caption = 'Parity'
+        ParentColor = False
+      end
+      object lblStopBits: TLabel
+        Left = 80
+        Height = 15
+        Top = 42
+        Width = 41
+        Caption = 'Stop Bit'
+        ParentColor = False
+      end
+    end
+    object gbRuntimeSettings: TGroupBox
+      Left = 368
+      Height = 112
+      Top = 0
+      Width = 200
+      ClientHeight = 92
+      ClientWidth = 196
+      Enabled = False
+      TabOrder = 1
+      object ckbAutoScroll: TCheckBox
+        Left = 16
+        Height = 19
+        Top = 0
+        Width = 75
+        Caption = 'AutoScroll'
+        Checked = True
+        State = cbChecked
+        TabOrder = 0
+      end
+      object ckbTimeStamp: TCheckBox
+        Left = 16
+        Height = 19
+        Top = 60
+        Width = 80
+        Caption = 'TimeStamp'
+        TabOrder = 1
+      end
+      object btnClearMemo: TButton
+        Left = 112
+        Height = 23
+        Top = 56
+        Width = 75
+        Caption = 'Clear'
+        OnClick = btnClearMemoClick
+        TabOrder = 2
+      end
+      object cbxWordWrap: TCheckBox
+        Left = 16
+        Height = 19
+        Top = 32
+        Width = 78
+        Caption = 'Word wrap'
+        Checked = True
+        OnChange = cbxWordWrapChange
+        State = cbChecked
+        TabOrder = 3
+      end
+    end
+    object btnClose: TButton
+      Left = 8
+      Height = 31
+      Top = 40
+      Width = 75
+      Caption = 'Close'
+      OnClick = btnCloseClick
+      TabOrder = 2
+    end
+    object btnOpen: TButton
+      Left = 8
+      Height = 31
+      Top = 5
+      Width = 75
+      Caption = 'Open'
+      OnClick = btnOpenClick
+      TabOrder = 3
+    end
+  end
+  object btnConnect: TButton
+    Left = 600
+    Height = 31
+    Top = 56
+    Width = 75
+    Caption = 'Connect'
+    OnClick = btnConnectClick
+    TabOrder = 6
+  end
+  object btnDisconnect: TButton
+    Left = 690
+    Height = 31
+    Top = 56
+    Width = 75
+    Caption = 'Disconnect'
+    OnClick = btnDisconnectClick
+    TabOrder = 7
+  end
+  object sbtnRefresh: TSpeedButton
+    Left = 742
+    Height = 22
+    Top = 24
+    Width = 23
+    Glyph.Data = {
+      36040000424D3604000000000000360000002800000010000000100000000100
+      200000000000000400006400000064000000000000000000000000000000A466
+      365FAA552B06000000000000000080800002A4653449A86D3D96AC7143CBAC71
+      43CBA96B3E91A665352B0000000000000000000000000000000000000000A467
+      35FDA96D3DB8AA552B06A567344AA96E3EDFB47D51F1D6AC8DFEE6C3A9FFE7C3
+      AAFFD1A584FBAA6E3FF3A6683A7300000000000000000000000000000000A566
+      35FEBE875DF5A86A3ADFAD7344F3E7BDA1FFFFDFCBFFFFE1CEFFFFE3D2FFF1D1
+      BCFFF2D3BEFFF4D5C1FFB07749F3A467375C000000000000000000000000A566
+      35FEFDCBABFFDBA680FFFACCAEFFFFD4B8FFFFD6BBFFDFB08EFEAD7142F3A96E
+      3EE8A96D3DE5AD7142F3CFA07CFFA86C3BF1A2682E160000000000000000A566
+      35FEFFC49DFFFFC6A1FFFFC8A4FFFEC9A5FFC68C61F6A96C3BD9A56834360000
+      000000000000A4653535A86C3CDCA76939FEA56738770000000000000000A566
+      35FEFFBB8DFFFFBD90FFFFBF94FFDC9E72FFA76836F0A5692D11000000000000
+      00000000000000000000A46D370EA96C3DC6A86B3ADC0000000000000000A566
+      35FEFFB380FFFFB380FFFFB583FFFDB585FFBE7F4EF5AA6C3AB9AA552B060000
+      0000000000000000000000000000926D2407A466365F0000000000000000A668
+      36F0A46735FDA46735FDA46735FDA46735FDA46735FDA46735FDA36735610000
+      0000000000000000000000000000000000000000000000000000000000000000
+      00000000000000000000000000000000000000000000A3673561A46735FDA566
+      35FEA56635FEA56635FEA56635FEA56635FEA66937F10000000000000000A466
+      365F926D240700000000000000000000000000000000AA552B06A96B39B8BE7E
+      4DF4FDB585FFFFB583FFFFB380FFFFB380FFA56635FE0000000000000000A86B
+      3ADCA86B3CC59D623B0D00000000000000000000000000000000A5692D11A768
+      36F0DC9E72FFFFBF94FFFFBD90FFFFBB8DFFA56635FE0000000000000000A667
+      3779A76938FEA96C3CD9A56535300000000000000000A4653535A96C3BD9C68C
+      61F6FEC9A5FFFFC8A4FFFFC6A1FFFFC49DFFA56635FE00000000000000009F6A
+      3518A86C3CF1CE9E7BFEAB7040F4AB6E3FE3AA6D3DE7AC7142F3DFB08EFEFFD6
+      BBFFFFD4B8FFFACCAEFFDBA680FFFDCBABFFA56635FE00000000000000000000
+      0000A469365FB0794CF3F4D6C3FFF0D0BBFFF0D1BCFFFFE3D2FFFFE1CEFFFFDF
+      CBFFE7BDA1FFAD7344F4A86A3ADFBE875DF5A56635FE00000000000000000000
+      000000000000A76B3C77AB6F40F3D2A887FBE8C5ACFFEBC9B1FFD7AE90FEB47E
+      53F1AA6E3FE0A567344AAA552B06A96D3DB8A46735FD00000000000000000000
+      00000000000000000000A367362FA86C3D93AC7143CBAB7041CFA96D3D9AA366
+      334B808000020000000000000000AA552B06A466365F00000000
+    }
+    OnClick = sbtnRefreshClick
+  end
+  object lblMonitor: TLabel
+    Left = 665
+    Height = 15
+    Top = 119
+    Width = 56
+    Caption = 'lblMonitor'
+    ParentColor = False
+  end
+  object AppMainMenu: TMainMenu
+    Left = 152
+    Top = 208
+    object miFile: TMenuItem
+      Caption = 'File'
+      object miExit: TMenuItem
+        Caption = 'Exit'
+        OnClick = miExitClick
+      end
+    end
+    object miAbout: TMenuItem
+      Caption = 'About'
+      OnClick = miAboutClick
+    end
+  end
+  object AppXMLPropStorage: TXMLPropStorage
+    StoredValues = <>
+    Left = 264
+    Top = 210
+  end
+end

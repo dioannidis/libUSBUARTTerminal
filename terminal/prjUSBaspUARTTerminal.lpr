@@ -2,11 +2,11 @@ program prjUSBaspUARTTerminal;
 
 {
 
-  This file is part of Object Pascal libUSB UART Terminal for USBasp ( Firmware 1.5 patched ).
+  This file is part of Nephelae's Object Pascal FPUSBasp.
 
-  libUSB UART Terminal.
+  LIBUSB/HIDAPI USBasp UART Terminal GUI.
 
-  Copyright (C) 2020 Dimitrios Chr. Ioannidis.
+  Copyright (C) 2022 Dimitrios Chr. Ioannidis.
     Nephelae - https://www.nephelae.eu
 
   https://www.nephelae.eu/
@@ -28,14 +28,27 @@ program prjUSBaspUARTTerminal;
 
 {$mode objfpc}{$H+}
 
-uses {$IFDEF UNIX} {$IFDEF UseCThreads}
-  cthreads, {$ENDIF} {$ENDIF}
+uses
+{$IFDEF UNIX}
+{$IFDEF UseCThreads}
+  cthreads,
+{$ENDIF}
+{$ENDIF}
+{$if declared(UseHeapTrace)}
+  SysUtils,
+{$endif}
   Interfaces, // this includes the LCL widgetset
-  Forms, uusbaspuartterminal;
+  Forms,
+  FPUSBaspGUIUARTTerminal;
 
 {$R *.res}
 
 begin
+{$if declared(UseHeapTrace)}
+  if FileExists('heap.trc') then
+    DeleteFile('heap.trc');
+  SetHeapTraceOutput('heap.trc');
+{$endIf}
   RequireDerivedFormResource := True;
   Application.Title:='USBasp UART Terminal';
   Application.Scaled:=True;
@@ -43,5 +56,3 @@ begin
   Application.CreateForm(TfrmMain, frmMain);
   Application.Run;
 end.
-
-
