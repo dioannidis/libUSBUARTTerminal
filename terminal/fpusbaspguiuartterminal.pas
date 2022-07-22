@@ -32,8 +32,8 @@ interface
 
 uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, StdCtrls, Menus,
-  ComCtrls, ComboEx, ExtCtrls, MaskEdit, XMLPropStorage, Buttons, DateUtils,
-  USBasp, SPSCRingBuffer;
+  ComCtrls, ComboEx, ExtCtrls, MaskEdit, XMLPropStorage, Buttons, usplashabout,
+  DateUtils, USBasp, SPSCRingBuffer;
 
 type
 
@@ -110,6 +110,7 @@ type
     sbtnRefresh: TSpeedButton;
     AppStatusBar: TStatusBar;
     AppXMLPropStorage: TXMLPropStorage;
+    USBaspUARTAbout: TSplashAbout;
     procedure btnClearMemoClick(Sender: TObject);
     procedure btnCloseClick(Sender: TObject);
     procedure btnConnectClick(Sender: TObject);
@@ -342,6 +343,7 @@ begin
     DefaultMonitor := dmActiveForm;
   end;
 
+  USBaspUARTAbout.ShowSplash;
   ToggleGUI;
 
   FUARTWantedState := False;
@@ -391,7 +393,7 @@ end;
 
 procedure TfrmMain.miAboutClick(Sender: TObject);
 begin
-  //USBaspUARTAbout.ShowAbout;
+  USBaspUARTAbout.ShowAbout;
 end;
 
 procedure TfrmMain.sbtnRefreshClick(Sender: TObject);

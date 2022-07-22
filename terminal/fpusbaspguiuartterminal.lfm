@@ -4,7 +4,7 @@ object frmMain: TfrmMain
   Top = 225
   Width = 785
   Caption = 'Form2'
-  ClientHeight = 540
+  ClientHeight = 560
   ClientWidth = 785
   Constraints.MinHeight = 560
   Constraints.MinWidth = 785
@@ -16,7 +16,6 @@ object frmMain: TfrmMain
   OnKeyPress = FormKeyPress
   Position = poScreenCenter
   SessionProperties = 'cbxBaudRate.ItemIndex;cbxLineBreak.ItemIndex;cbxWordWrap.Checked;ckbAutoScroll.Checked;ckbTimeStamp.Checked;Height;Left;medtMemoBufferLines.Text;Top;Width;cbxDataBits.ItemIndex;cbxParity.ItemIndex;cbxStopBits.ItemIndex'
-  LCLVersion = '2.2.2.0'
   object edtSend: TEdit
     Left = 8
     Height = 23
@@ -438,8 +437,8 @@ object frmMain: TfrmMain
     Left = 665
     Height = 15
     Top = 119
-    Width = 56
-    Caption = 'lblMonitor'
+    Width = 23
+    Caption = 'IDLE'
     ParentColor = False
   end
   object AppMainMenu: TMainMenu
@@ -461,5 +460,35 @@ object frmMain: TfrmMain
     StoredValues = <>
     Left = 264
     Top = 210
+  end
+  object USBaspUARTAbout: TSplashAbout
+    DelaySeconds = 3
+    Font.Height = -13
+    LicenseFile = saMIT
+    Author = 'Dimitrios Chr. Ioannidis'
+    UserTitle = 'USBasp UART Terminal'
+    ShowDescription = False
+    FormSplashWidth = 340
+    FormAboutWidth = 340
+    ShowCreditButton = False
+    CreditsTextfileName = 'credits.txt'
+    PoweredBy.About.Description.Strings = (
+      'Component that shows a Powered By graphic.'#13#10'Use method ShowPoweredByForm in your form.create()'#13#10'to use the component'
+    )
+    PoweredBy.About.Title = 'About PoweredBy component'
+    PoweredBy.About.Height = 280
+    PoweredBy.About.Width = 400
+    PoweredBy.About.Font.Color = clNavy
+    PoweredBy.About.Font.Height = -13
+    PoweredBy.About.Font.Name = 'Arial'
+    PoweredBy.About.BackGroundColor = clWindow
+    PoweredBy.About.Version = '1.0.4.0'
+    PoweredBy.About.Authorname = 'Gordon Bamber'
+    PoweredBy.About.Organisation = 'Public Domain'
+    PoweredBy.About.AuthorEmail = 'minesadorada@charcodelvalle.com'
+    PoweredBy.About.ComponentName = 'PoweredBy component'
+    PoweredBy.About.LicenseType = abModifiedGPL
+    Left = 56
+    Top = 208
   end
 end
