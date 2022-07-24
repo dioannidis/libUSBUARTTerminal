@@ -463,11 +463,15 @@ object frmMain: TfrmMain
   end
   object USBaspUARTAbout: TSplashAbout
     DelaySeconds = 3
+    BackGroundColor = clDefault
     Font.Height = -13
     LicenseFile = saMIT
     Author = 'Dimitrios Chr. Ioannidis'
     UserTitle = 'USBasp UART Terminal'
-    ShowDescription = False
+    ShowDescription = True
+    Description.Strings = (
+      'An Object Pascal UART Terminal for USBasp UART firmware .'
+    )
     FormSplashWidth = 340
     FormAboutWidth = 340
     ShowCreditButton = False
