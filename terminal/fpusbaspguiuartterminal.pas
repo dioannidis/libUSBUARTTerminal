@@ -93,7 +93,6 @@ type
     gbNoRuntimeSettings: TGroupBox;
     gbRuntimeSettings: TGroupBox;
     gbUART: TGroupBox;
-    lblMonitor: TLabel;
     lblBaud: TLabel;
     lblStopBits: TLabel;
     lblParity: TLabel;
@@ -132,7 +131,9 @@ type
     FUSBasp: TUSBasp;
     FLastCharReceived: char;
     FUARTWantedState: boolean;
-    FUARTLastState: TDateTime;
+
+    FUARTLastStateChange: TDateTime;
+    FUARTLastState: string;
 
     FThreadUARTRead: TThreadUARTRead;
     FSendSerialData: TBytes;
@@ -166,7 +167,7 @@ procedure TThreadMonitor.DoMonitor;
 var
   RawSerialDataMsg: PRawSerialDataMsg;
 begin
-  if (frmMain.FUSBasp.Connected) and (not Application.Terminated)  then
+  if (frmMain.FUSBasp.Connected) and (not Application.Terminated) then
   begin
     New(RawSerialDataMsg);
     case FData[0] of
@@ -187,7 +188,7 @@ procedure TThreadMonitor.Execute;
 begin
   repeat
     FDataCount := FBuffer.Read(FData, SizeOf(TByteArray));
-    if (FDataCount > 0) and (not Application.Terminated)  then
+    if (FDataCount > 0) and (not Application.Terminated) then
       Synchronize(@DoMonitor)
     else
       Sleep(2);
@@ -206,7 +207,7 @@ procedure TThreadUARTRead.DoUARTReceiveProcessing;
 var
   RawSerialDataMsg: PRawSerialDataMsg;
 begin
-  if (frmMain.FUSBasp.UARTOpened) and (not Application.Terminated)  then
+  if (frmMain.FUSBasp.UARTOpened) and (not Application.Terminated) then
   begin
     New(RawSerialDataMsg);
     RawSerialDataMsg^.AsString :=
@@ -347,7 +348,7 @@ begin
   ToggleGUI;
 
   FUARTWantedState := False;
-  FUARTLastState := Now;
+  FUARTLastStateChange := Now;
 end;
 
 procedure TfrmMain.FormDestroy(Sender: TObject);
@@ -424,15 +425,14 @@ end;
 procedure TfrmMain.USBaspMonitor(Data: PtrInt);
 var
   RawSerialDataMsg: TRawSerialDataMsg;
-  tmp: int64;
 begin
   RawSerialDataMsg := PRawSerialDataMsg(Data)^;
   try
-    lblMonitor.Caption := RawSerialDataMsg.AsString;
+    FUARTLastState := RawSerialDataMsg.AsString;
     if FUARTWantedState then
     begin
-      tmp := MilliSecondsBetween(FUARTLastState, Now);
-      if (tmp > 100) and (lblMonitor.Caption = 'IDLE') then
+      if (MilliSecondsBetween(FUARTLastStateChange, Now) > 100) and
+        (FUARTLastState = 'IDLE') then
       begin
         if not FUSBasp.UARTOpened then
           FUSBasp.UARTOpen(TUARTBaudRate[cbxBaudRate.ItemIndex],
@@ -442,7 +442,7 @@ begin
       else
       if FUSBasp.UARTOpened then
       begin
-        FUARTLastState := Now;
+        FUARTLastStateChange := Now;
         FUSBasp.UARTClose;
       end;
     end;
