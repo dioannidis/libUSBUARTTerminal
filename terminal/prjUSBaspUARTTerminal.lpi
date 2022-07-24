@@ -18,7 +18,8 @@
       <UseVersionInfo Value="True"/>
       <AutoIncrementBuild Value="True"/>
       <MinorVersionNr Value="7"/>
-      <BuildNr Value="17"/>
+      <RevisionNr Value="1"/>
+      <BuildNr Value="18"/>
       <StringTable FileDescription="FPUSBasp GUI UART Terminal" InternalName="prjFPUSBaspUARTTerminal" LegalCopyright="© 2022 Dimitrios Chr. Ioannidis" LegalTrademarks="© 2022 Dimitrios Chr. Ioannidis" OriginalFilename="prjFPUSBaspUARTTerminal.exe" ProductName="FPUSBasp GUI UART Terminal" ProductVersion="0.5"/>
     </VersionInfo>
     <BuildModes Count="4">
