@@ -433,14 +433,6 @@ object frmMain: TfrmMain
     }
     OnClick = sbtnRefreshClick
   end
-  object lblMonitor: TLabel
-    Left = 665
-    Height = 15
-    Top = 119
-    Width = 23
-    Caption = 'IDLE'
-    ParentColor = False
-  end
   object AppMainMenu: TMainMenu
     Left = 152
     Top = 208
