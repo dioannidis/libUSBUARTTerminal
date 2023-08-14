@@ -96,7 +96,7 @@ end;
 procedure TThreadHID_Read.Execute;
 var
   USBAspHidPacket: array[0..7] of byte = (0, 0, 0, 0, 0, 0, 0, 0);
-  DataCount: Byte;
+  DataCount: byte;
 begin
   repeat
     DataCount := FUSBaspDevice^.Device^.Read(USBAspHidPacket, FUSBaspDevice^.ReportSize);
@@ -114,7 +114,7 @@ end;
 procedure TThreadHID_Write.Execute;
 var
   USBAspHidPacket: array[0..8] of byte = (0, 0, 0, 0, 0, 0, 0, 0, 0);
-  DataCount: Byte = 0;
+  DataCount: byte = 0;
 begin
   repeat
     FThreadEvent.WaitFor(INFINITE);
@@ -134,7 +134,7 @@ end;
 procedure TThreadHID_UARTRead.Execute;
 var
   USBAspHidPacket: array[0..7] of byte = (0, 0, 0, 0, 0, 0, 0, 0);
-  SerialDataCount, DataCount: Byte;
+  SerialDataCount, DataCount: byte;
 begin
   repeat
     DataCount := FUSBaspDevice^.Device^.Read(USBAspHidPacket, FUSBaspDevice^.ReportSize);
@@ -158,28 +158,31 @@ end;
 procedure TThreadHID_UARTWrite.Execute;
 var
   USBAspHidPacket: array[0..8] of byte = (0, 0, 0, 0, 0, 0, 0, 0, 0);
-  SerialCountOrDataByte: byte = 0;
+  SerialCountOrDataByte, DataCount: byte;
 begin
   repeat
-    FThreadEvent.WaitFor(INFINITE);
+    if FBuffer.Empty then
+    begin
+      FThreadEvent.ResetEvent;
+      FThreadEvent.WaitFor(INFINITE);
+    end;
 
-    SerialCountOrDataByte := FBuffer.Peek(USBAspHidPacket[1], 8);
-
+    DataCount := FBuffer.Peek(USBAspHidPacket[1], 8);
+    SerialCountOrDataByte := DataCount;
     if (SerialCountOrDataByte = 8) and (USBAspHidPacket[8] = 7) then
       SerialCountOrDataByte := 7
     else
     if SerialCountOrDataByte < 8 then
       USBAspHidPacket[8] := SerialCountOrDataByte;
 
-    if SerialCountOrDataByte > 0 then
+    if DataCount > 0 then
     begin
       USBAspHidPacket[0] := 0;
-      if (FUSBaspDevice^.Device^.Write(USBAspHidPacket, FUSBaspDevice^.ReportSize + 1) -
-        1) = 8 then
-        FBuffer.AdvanceReadIdx(SerialCountOrDataByte);
+      SerialCountOrDataByte :=
+        FUSBaspDevice^.Device^.Write(USBAspHidPacket, FUSBaspDevice^.ReportSize + 1);
+      FBuffer.AdvanceReadIdx(DataCount);
     end;
 
-    FThreadEvent.ResetEvent;
   until Terminated;
 end;
 

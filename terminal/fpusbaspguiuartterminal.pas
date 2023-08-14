@@ -55,7 +55,8 @@ type
   protected
     procedure Execute; override;
   public
-    constructor Create(const ABuffer: TSPSCRingBuffer; const AMonitorEvent: TEvent); reintroduce;
+    constructor Create(const ABuffer: TSPSCRingBuffer; const AMonitorEvent: TEvent);
+      reintroduce;
   end;
 
   { TThreadUARTRead }
@@ -70,7 +71,8 @@ type
   protected
     procedure Execute; override;
   public
-    constructor Create(const ABuffer: TSPSCRingBuffer; const AReceiveEvent: TEvent); reintroduce;
+    constructor Create(const ABuffer: TSPSCRingBuffer; const AReceiveEvent: TEvent);
+      reintroduce;
   end;
 
   { TfrmMain }
@@ -196,7 +198,8 @@ begin
   until Terminated;
 end;
 
-constructor TThreadMonitor.Create(const ABuffer: TSPSCRingBuffer; const AMonitorEvent: TEvent);
+constructor TThreadMonitor.Create(const ABuffer: TSPSCRingBuffer;
+  const AMonitorEvent: TEvent);
 begin
   inherited Create(False);
   FMonitorEvent := AMonitorEvent;
@@ -241,10 +244,11 @@ begin
   until Terminated;
 end;
 
-constructor TThreadUARTRead.Create(const ABuffer: TSPSCRingBuffer; const AReceiveEvent: TEvent);
+constructor TThreadUARTRead.Create(const ABuffer: TSPSCRingBuffer;
+  const AReceiveEvent: TEvent);
 begin
   inherited Create(False);
-  FReceiveEvent:= AReceiveEvent;
+  FReceiveEvent := AReceiveEvent;
   FBuffer := ABuffer;
 end;
 
@@ -274,8 +278,8 @@ begin
       FUSBasp.USBaspDevice.CrystalOsc.ToString() + ' Hz] TPI: [' +
       BoolToStr(FUSBasp.USBaspDevice.HasTPI, 'On', 'Off') + '] UART: [' +
       BoolToStr(FUSBasp.USBaspDevice.HasUart, 'On', 'Off') + '] HID UART: [' +
-      BoolToStr(FUSBasp.USBaspDevice.HasHIDUart, 'On', 'Off') + '] SN Write: [' +
-      BoolToStr(FUSBasp.USBaspDevice.HasSNWrite, 'On', 'Off') + ']';
+      BoolToStr(FUSBasp.USBaspDevice.HasHIDUart, 'On', 'Off') +
+      '] SN Write: [' + BoolToStr(FUSBasp.USBaspDevice.HasSNWrite, 'On', 'Off') + ']';
   end
   else
     AppStatusBar.SimpleText := 'No USBasp Device Found';
@@ -316,23 +320,14 @@ begin
 end;
 
 procedure TfrmMain.btnSendClick(Sender: TObject);
-var
-  SendCount: PtrUInt;
 begin
-  SendCount := 0;
   case cbxLineBreak.ItemIndex of
     1: edtSend.Text := edtSend.Text + #13;
     2: edtSend.Text := edtSend.Text + #10;
     3: edtSend.Text := edtSend.Text + #13#10;
   end;
-  FSendSerialData := TEncoding.ASCII.GetBytes(edtSend.Text);
-  while SendCount < Length(FSendSerialData) do
-  begin
-    SendCount := SendCount + FUSBasp.TransmitBuffer.Write(
-      FSendSerialData[0 + SendCount], Length(FSendSerialData) - SendCount);
-    FUSBasp.TransmitEvent.SetEvent;
-  end;
-  FUSBasp.TransmitEvent.ResetEvent;
+  FUSBasp.TransmitBuffer.Write(TEncoding.ASCII.GetBytes(edtSend.Text)[0], Length(edtSend.Text));
+  FUSBasp.TransmitEvent.SetEvent;
   edtSend.Text := '';
 end;
 
@@ -459,7 +454,7 @@ begin
   finally
     Dispose(PRawSerialDataMsg(Data));
   end;
-  Label1.Caption:=FUARTLastState;
+  Label1.Caption := FUARTLastState;
 end;
 
 procedure TfrmMain.ToggleGUI;
