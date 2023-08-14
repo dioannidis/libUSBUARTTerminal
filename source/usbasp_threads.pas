@@ -117,15 +117,19 @@ var
   DataCount: byte = 0;
 begin
   repeat
-    FThreadEvent.WaitFor(INFINITE);
+    if FBuffer.Empty then
+    begin
+      FThreadEvent.ResetEvent;
+      FThreadEvent.WaitFor(INFINITE);
+    end;
+    FillChar(USBAspHidPacket, 8, 0);
     DataCount := FBuffer.Peek(USBAspHidPacket[1], 8);
     if DataCount > 0 then
     begin
-      USBAspHidPacket[0] := 0;
-      FBuffer.AdvanceReadIdx(FUSBaspDevice^.Device^.Write(USBAspHidPacket,
-        FUSBaspDevice^.ReportSize + 1) - 1);
+      FUSBaspDevice^.Device^.Write(USBAspHidPacket,
+        FUSBaspDevice^.ReportSize + 1);
+      FBuffer.AdvanceReadIdx(DataCount);
     end;
-    FThreadEvent.ResetEvent;
   until Terminated;
 end;
 
@@ -177,7 +181,6 @@ begin
 
     if DataCount > 0 then
     begin
-      USBAspHidPacket[0] := 0;
       SerialCountOrDataByte :=
         FUSBaspDevice^.Device^.Write(USBAspHidPacket, FUSBaspDevice^.ReportSize + 1);
       FBuffer.AdvanceReadIdx(DataCount);
