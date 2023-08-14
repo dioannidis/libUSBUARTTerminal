@@ -6,7 +6,7 @@ unit USBasp_Definitions;
 
   USBasp definitions.
 
-  Copyright (C) 2022 Dimitrios Chr. Ioannidis.
+  Copyright (C) 2022 - 2023 Dimitrios Chr. Ioannidis.
     Nephelae - https://www.nephelae.eu
 
   https://www.nephelae.eu/
@@ -39,41 +39,42 @@ const
 
   USBASP_FUNC_GETCAPABILITIES = 127;
 
-  USBASP_CAP_0_TPI            = 1;
-  USBASP_CAP_6_UART           = 6;
-  USBASP_CAP_7_HID_UART       = 7;
+  USBASP_CAP_0_TPI = 1;
+  USBASP_CAP_2_SNHIDUPDATE = 32;
+  USBASP_CAP_6_UART = 64;
+  USBASP_CAP_7_HID_UART = 128;
 
   USBASP_NO_CAPS = (-4);
 
-  USBASP_CAP_12MHZ_CLOCK      = 0;
-  USBASP_CAP_16MHZ_CLOCK      = 1;
-  USBASP_CAP_18MHZ_CLOCK      = 2;
-  USBASP_CAP_20MHZ_CLOCK      = 3;
+  USBASP_CAP_12MHZ_CLOCK = 0;
+  USBASP_CAP_16MHZ_CLOCK = 1;
+  USBASP_CAP_18MHZ_CLOCK = 2;
+  USBASP_CAP_20MHZ_CLOCK = 3;
 
   // USBasp UART Extension
   // https://github.com/dioannidis/usbasp/blob/master/firmware/usbasp.h
-  //
-  USBASP_UART_PARITY_MASK     = %11;
-  USBASP_UART_PARITY_NONE     = %00;
-  USBASP_UART_PARITY_EVEN     = %01;
-  USBASP_UART_PARITY_ODD      = %10;
 
-  USBASP_UART_STOP_MASK       = %100;
-  USBASP_UART_STOP_1BIT       = %000;
-  USBASP_UART_STOP_2BIT       = %100;
+  USBASP_UART_PARITY_MASK = %11;
+  USBASP_UART_PARITY_NONE = %00;
+  USBASP_UART_PARITY_EVEN = %01;
+  USBASP_UART_PARITY_ODD = %10;
 
-  USBASP_UART_BYTES_MASK      = %111000;
-  USBASP_UART_BYTES_5B        = %000000;
-  USBASP_UART_BYTES_6B        = %001000;
-  USBASP_UART_BYTES_7B        = %010000;
-  USBASP_UART_BYTES_8B        = %011000;
-  USBASP_UART_BYTES_9B        = %100000;
+  USBASP_UART_STOP_MASK = %100;
+  USBASP_UART_STOP_1BIT = %000;
+  USBASP_UART_STOP_2BIT = %100;
+
+  USBASP_UART_BYTES_MASK = %111000;
+  USBASP_UART_BYTES_5B = %000000;
+  USBASP_UART_BYTES_6B = %001000;
+  USBASP_UART_BYTES_7B = %010000;
+  USBASP_UART_BYTES_8B = %011000;
+  USBASP_UART_BYTES_9B = %100000;
 
 type
 
-  { TUSBasp_HIDDevice }
+  { TUSBaspHIDIntf }
 
-  TUSBasp_HIDDevice = record
+  TUSBaspHIDIntf = record
     Device: PHidDevice;
     index: byte;
     Path: string;
@@ -89,27 +90,27 @@ type
     ReportSize: word;
     PacketCount: byte;
   end;
-  PUSBasp_HIDDevice = ^TUSBasp_HIDDevice;
+  PUSBaspHIDIntf = ^TUSBaspHIDIntf;
 
-  { TUSBasp_HIDDeviceList }
+  { TUSBaspHIDIntfList }
 
-  TUSBasp_HIDDeviceList = class(TFPList)
+  TUSBaspHIDIntfList = class(TFPList)
   private
-    function Get(Index: integer): PUSBasp_HIDDevice;
+    function Get(Index: integer): PUSBaspHIDIntf;
   public
     destructor Destroy; override;
-    function Add(Value: PUSBasp_HIDDevice): integer;
+    function Add(Value: PUSBaspHIDIntf): integer;
     procedure FreeItems;
-    property Items[Index: integer]: PUSBasp_HIDDevice read Get; default;
+    property Items[Index: integer]: PUSBaspHIDIntf read Get; default;
   end;
 
-  { TUSBasp_USBDevice }
+  { TUSBasp }
 
-  TUSBasp_USBDevice = record
+  TUSBasp = record
     Device: plibusb_device;
     Handle: plibusb_device_handle;
-    HidDevice: PUSBasp_HIDDevice;
-    MonitorHidDevice: PUSBasp_HIDDevice;
+    UARTInterface: PUSBaspHIDIntf;
+    MonitorInterface: PUSBaspHIDIntf;
     ContainerID: TGUID;
     ProductName: string[255];
     Manufacturer: string[255];
@@ -117,44 +118,46 @@ type
     HasUart: boolean;
     HasHIDUart: boolean;
     HasTPI: boolean;
-    CrystalOsc: Integer;
+    HasSNWrite: boolean;
+    HasMonitorIntf: boolean;
+    CrystalOsc: integer;
     Interface0Claimed: boolean;
   end;
-  PUSBasp_USBDevice = ^TUSBasp_USBDevice;
+  PUSBasp = ^TUSBasp;
 
-  { TUSBasp_USBDeviceList }
+  { TUSBaspList }
 
-  TUSBasp_USBDeviceList = class(TFPList)
+  TUSBaspList = class(TFPList)
   private
-    function Get(Index: integer): PUSBasp_USBDevice;
+    function Get(Index: integer): PUSBasp;
   public
     destructor Destroy; override;
-    function Add(Value: PUSBasp_USBDevice): integer;
+    function Add(Value: PUSBasp): integer;
     procedure FreeItems;
-    property Items[Index: integer]: PUSBasp_USBDevice read Get; default;
+    property Items[Index: integer]: PUSBasp read Get; default;
   end;
 
 implementation
 
-{ TUSBasp_HIDDeviceList }
+{ TUSBaspHIDIntfList }
 
-function TUSBasp_HIDDeviceList.Get(Index: integer): PUSBasp_HIDDevice;
+function TUSBaspHIDIntfList.Get(Index: integer): PUSBaspHIDIntf;
 begin
-  Result := PUSBasp_HIDDevice(inherited Get(Index));
+  Result := PUSBaspHIDIntf(inherited Get(Index));
 end;
 
-destructor TUSBasp_HIDDeviceList.Destroy;
+destructor TUSBaspHIDIntfList.Destroy;
 begin
   FreeItems;
   inherited Destroy;
 end;
 
-function TUSBasp_HIDDeviceList.Add(Value: PUSBasp_HIDDevice): integer;
+function TUSBaspHIDIntfList.Add(Value: PUSBaspHIDIntf): integer;
 begin
   Result := inherited Add(Value);
 end;
 
-procedure TUSBasp_HIDDeviceList.FreeItems;
+procedure TUSBaspHIDIntfList.FreeItems;
 var
   i: integer;
 begin
@@ -162,14 +165,14 @@ begin
     Dispose(Items[i]);
 end;
 
-{ TUSBasp_USBDeviceList }
+{ TUSBaspList }
 
-function TUSBasp_USBDeviceList.Get(Index: integer): PUSBasp_USBDevice;
+function TUSBaspList.Get(Index: integer): PUSBasp;
 begin
-  Result := PUSBasp_USBDevice(inherited Get(Index));
+  Result := PUSBasp(inherited Get(Index));
 end;
 
-procedure TUSBasp_USBDeviceList.FreeItems;
+procedure TUSBaspList.FreeItems;
 var
   i: integer;
 begin
@@ -177,13 +180,13 @@ begin
     Dispose(Items[i]);
 end;
 
-destructor TUSBasp_USBDeviceList.Destroy;
+destructor TUSBaspList.Destroy;
 begin
   FreeItems;
   inherited Destroy;
 end;
 
-function TUSBasp_USBDeviceList.Add(Value: PUSBasp_USBDevice): integer;
+function TUSBaspList.Add(Value: PUSBasp): integer;
 begin
   Result := inherited Add(Value);
 end;

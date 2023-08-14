@@ -7,7 +7,7 @@ unit USBasp_Threads;
 
   USB HID Read / Write threads.
 
-  Copyright (C) 2022 Dimitrios Chr. Ioannidis.
+  Copyright (C) 2022 - 2023 Dimitrios Chr. Ioannidis.
     Nephelae - https://www.nephelae.eu
 
   https://www.nephelae.eu/
@@ -32,73 +32,101 @@ unit USBasp_Threads;
 interface
 
 uses
-  Classes, SysUtils, USBasp_HIDAPI, USBasp_Definitions, SPSCRingBuffer;
+  Classes, SysUtils, syncobjs,
+  {USBasp_HIDAPI,} USBasp_Definitions, SPSCRingBuffer;
 
 type
 
+  { TThreadHID_Base }
+
+  TThreadHID_Base = class(TThread)
+  protected
+    FThreadEvent: TEvent;
+    FBuffer: TSPSCRingBuffer;
+    FUSBaspDevice: PUSBaspHIDIntf;
+  public
+    constructor Create(const AUSBaspDevice: PUSBaspHIDIntf;
+      const ABuffer: TSPSCRingBuffer; const AThreadEvent: TEvent);
+      reintroduce;
+  end;
+
+
   { TThreadHID_Read }
 
-  TThreadHID_Read = class(TThread)
-  private
-    FBuffer: TSPSCRingBuffer;
-    FUSBaspDevice: PUSBasp_HIDDevice;
+  TThreadHID_Read = class(TThreadHID_Base)
   protected
     procedure Execute; override;
-  public
-    constructor Create(const AUSBaspDevice: PUSBasp_HIDDevice;
-      const ABuffer: TSPSCRingBuffer); reintroduce;
+  end;
+
+  { TThreadHID_Write }
+
+  TThreadHID_Write = class(TThreadHID_Base)
+  protected
+    procedure Execute; override;
   end;
 
   { TThreadHID_UARTRead }
 
-  TThreadHID_UARTRead = class(TThread)
-  private
-    FBuffer: TSPSCRingBuffer;
-    FUSBaspDevice: PUSBasp_HIDDevice;
-  protected
+  TThreadHID_UARTRead = class(TThreadHID_Base)
     procedure Execute; override;
-  public
-    constructor Create(const AUSBaspDevice: PUSBasp_HIDDevice;
-      const ABuffer: TSPSCRingBuffer); reintroduce;
   end;
 
-  { TWriteRead }
+  { TThreadHID_UARTWrite }
 
-  TThreadHID_UARTWrite = class(TThread)
-  private
-    FBuffer: TSPSCRingBuffer;
-    FUSBaspDevice: PUSBasp_HIDDevice;
+  TThreadHID_UARTWrite = class(TThreadHID_Base)
   protected
     procedure Execute; override;
-  public
-    constructor Create(const AUSBaspDevice: PUSBasp_HIDDevice;
-      const ABuffer: TSPSCRingBuffer); reintroduce;
   end;
 
 implementation
+
+{ TThreadHID_Base }
+
+constructor TThreadHID_Base.Create(const AUSBaspDevice: PUSBaspHIDIntf;
+  const ABuffer: TSPSCRingBuffer; const AThreadEvent: TEvent);
+begin
+  inherited Create(False);
+  FThreadEvent := AThreadEvent;
+  FBuffer := ABuffer;
+  FUSBaspDevice := AUSBaspDevice;
+end;
 
 { TThreadHID_Read }
 
 procedure TThreadHID_Read.Execute;
 var
   USBAspHidPacket: array[0..7] of byte = (0, 0, 0, 0, 0, 0, 0, 0);
-  DataCount: byte;
+  DataCount: Byte;
 begin
   repeat
-    DataCount := usbasp_hidapi_read(FUSBaspDevice, USBAspHidPacket);
+    DataCount := FUSBaspDevice^.Device^.Read(USBAspHidPacket, FUSBaspDevice^.ReportSize);
     if DataCount > 0 then
-      FBuffer.Write(USBAspHidPacket, DataCount)
-    else
-      Sleep(2);
+    begin
+      FBuffer.Write(USBAspHidPacket, DataCount);
+      FThreadEvent.SetEvent;
+    end;
+    FThreadEvent.ResetEvent;
   until Terminated;
 end;
 
-constructor TThreadHID_Read.Create(const AUSBaspDevice: PUSBasp_HIDDevice;
-  const ABuffer: TSPSCRingBuffer);
+{ TThreadHID_Write }
+
+procedure TThreadHID_Write.Execute;
+var
+  USBAspHidPacket: array[0..8] of byte = (0, 0, 0, 0, 0, 0, 0, 0, 0);
+  DataCount: Byte = 0;
 begin
-  inherited Create(False);
-  FBuffer := ABuffer;
-  FUSBaspDevice := AUSBaspDevice;
+  repeat
+    FThreadEvent.WaitFor(INFINITE);
+    DataCount := FBuffer.Peek(USBAspHidPacket[1], 8);
+    if DataCount > 0 then
+    begin
+      USBAspHidPacket[0] := 0;
+      FBuffer.AdvanceReadIdx(FUSBaspDevice^.Device^.Write(USBAspHidPacket,
+        FUSBaspDevice^.ReportSize + 1) - 1);
+    end;
+    FThreadEvent.ResetEvent;
+  until Terminated;
 end;
 
 { TThreadHID_UARTRead }
@@ -106,68 +134,53 @@ end;
 procedure TThreadHID_UARTRead.Execute;
 var
   USBAspHidPacket: array[0..7] of byte = (0, 0, 0, 0, 0, 0, 0, 0);
-  SerialDataCount: byte;
+  SerialDataCount, DataCount: Byte;
 begin
   repeat
-    if usbasp_hidapi_read(FUSBaspDevice, USBAspHidPacket) > 0 then
+    DataCount := FUSBaspDevice^.Device^.Read(USBAspHidPacket, FUSBaspDevice^.ReportSize);
+    if (USBAspHidPacket[7] > 0) then
     begin
-      if (USBAspHidPacket[7] > 0) then
-      begin
-        if (USBAspHidPacket[7] > 7) then
-          SerialDataCount := 8
-        else
-          SerialDataCount := USBAspHidPacket[7];
-        if FBuffer.Write(USBAspHidPacket, SerialDataCount) <> SerialDataCount then
-          raise TExceptionClass.Create('Buffer OverRun ');
-      end;
+      if (USBAspHidPacket[7] > 7) then
+        SerialDataCount := 8
+      else
+        SerialDataCount := USBAspHidPacket[7];
+      if FBuffer.Write(USBAspHidPacket, SerialDataCount) <> SerialDataCount then
+        raise TExceptionClass.Create('Buffer OverRun ');
+      FThreadEvent.SetEvent;
     end
     else
-      Sleep(2);
+      FThreadEvent.ResetEvent;
   until Terminated;
-end;
-
-constructor TThreadHID_UARTRead.Create(const AUSBaspDevice: PUSBasp_HIDDevice;
-  const ABuffer: TSPSCRingBuffer);
-begin
-  inherited Create(False);
-  FBuffer := ABuffer;
-  FUSBaspDevice := AUSBaspDevice;
 end;
 
 { TThreadHID_UARTWrite }
 
 procedure TThreadHID_UARTWrite.Execute;
 var
-  USBAspHidPacket: array[0..7] of byte = (0, 0, 0, 0, 0, 0, 0, 0);
+  USBAspHidPacket: array[0..8] of byte = (0, 0, 0, 0, 0, 0, 0, 0, 0);
   SerialCountOrDataByte: byte = 0;
 begin
   repeat
-    SerialCountOrDataByte := FBuffer.Peek(USBAspHidPacket, 8);
+    FThreadEvent.WaitFor(INFINITE);
 
-    if (SerialCountOrDataByte = 8) and (USBAspHidPacket[7] = 7) then
+    SerialCountOrDataByte := FBuffer.Peek(USBAspHidPacket[1], 8);
+
+    if (SerialCountOrDataByte = 8) and (USBAspHidPacket[8] = 7) then
       SerialCountOrDataByte := 7
     else
-      if SerialCountOrDataByte < 8 then
-        USBAspHidPacket[7] := SerialCountOrDataByte;
+    if SerialCountOrDataByte < 8 then
+      USBAspHidPacket[8] := SerialCountOrDataByte;
 
     if SerialCountOrDataByte > 0 then
     begin
-      if (usbasp_hidapi_write(FUSBaspDevice, USBAspHidPacket) = 8) then
+      USBAspHidPacket[0] := 0;
+      if (FUSBaspDevice^.Device^.Write(USBAspHidPacket, FUSBaspDevice^.ReportSize + 1) -
+        1) = 8 then
         FBuffer.AdvanceReadIdx(SerialCountOrDataByte);
-    end
-    else
-      Sleep(2);
+    end;
 
+    FThreadEvent.ResetEvent;
   until Terminated;
 end;
-
-constructor TThreadHID_UARTWrite.Create(const AUSBaspDevice: PUSBasp_HIDDevice;
-  const ABuffer: TSPSCRingBuffer);
-begin
-  inherited Create(False);
-  FBuffer := ABuffer;
-  FUSBaspDevice := AUSBaspDevice;
-end;
-
 
 end.

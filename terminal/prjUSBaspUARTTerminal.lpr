@@ -6,7 +6,7 @@ program prjUSBaspUARTTerminal;
 
   LIBUSB/HIDAPI USBasp UART Terminal GUI.
 
-  Copyright (C) 2022 Dimitrios Chr. Ioannidis.
+  Copyright (C) 2022 - 2023 Dimitrios Chr. Ioannidis.
     Nephelae - https://www.nephelae.eu
 
   https://www.nephelae.eu/

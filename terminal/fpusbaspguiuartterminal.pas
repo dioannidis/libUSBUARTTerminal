@@ -6,7 +6,7 @@ unit FPUSBaspGUIUARTTerminal;
 
   LIBUSB/HIDAPI USBasp UART Terminal GUI.
 
-  Copyright (C) 2022 Dimitrios Chr. Ioannidis.
+  Copyright (C) 2022 - 2023 Dimitrios Chr. Ioannidis.
     Nephelae - https://www.nephelae.eu
 
   https://www.nephelae.eu/
@@ -32,8 +32,8 @@ interface
 
 uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, StdCtrls, Menus,
-  ComCtrls, ComboEx, ExtCtrls, MaskEdit, XMLPropStorage, Buttons, usplashabout,
-  DateUtils, USBasp, SPSCRingBuffer;
+  ComCtrls, ComboEx, ExtCtrls, MaskEdit, XMLPropStorage, Buttons, //usplashabout,
+  DateUtils, syncobjs, USBasp, SPSCRingBuffer;
 
 type
 
@@ -47,6 +47,7 @@ type
 
   TThreadMonitor = class(TThread)
   private
+    FMonitorEvent: TEvent;
     FBuffer: TSPSCRingBuffer;
     FData: TByteArray;
     FDataCount: integer;
@@ -54,13 +55,14 @@ type
   protected
     procedure Execute; override;
   public
-    constructor Create(const ABuffer: TSPSCRingBuffer); reintroduce;
+    constructor Create(const ABuffer: TSPSCRingBuffer; const AMonitorEvent: TEvent); reintroduce;
   end;
 
   { TThreadUARTRead }
 
   TThreadUARTRead = class(TThread)
   private
+    FReceiveEvent: TEvent;
     FBuffer: TSPSCRingBuffer;
     FSerialData: TByteArray;
     FSerialDataCount: integer;
@@ -68,7 +70,7 @@ type
   protected
     procedure Execute; override;
   public
-    constructor Create(const ABuffer: TSPSCRingBuffer); reintroduce;
+    constructor Create(const ABuffer: TSPSCRingBuffer; const AReceiveEvent: TEvent); reintroduce;
   end;
 
   { TfrmMain }
@@ -93,6 +95,7 @@ type
     gbNoRuntimeSettings: TGroupBox;
     gbRuntimeSettings: TGroupBox;
     gbUART: TGroupBox;
+    Label1: TLabel;
     lblBaud: TLabel;
     lblStopBits: TLabel;
     lblParity: TLabel;
@@ -109,7 +112,6 @@ type
     sbtnRefresh: TSpeedButton;
     AppStatusBar: TStatusBar;
     AppXMLPropStorage: TXMLPropStorage;
-    USBaspUARTAbout: TSplashAbout;
     procedure btnClearMemoClick(Sender: TObject);
     procedure btnCloseClick(Sender: TObject);
     procedure btnConnectClick(Sender: TObject);
@@ -128,7 +130,7 @@ type
     procedure miAboutClick(Sender: TObject);
     procedure sbtnRefreshClick(Sender: TObject);
   private
-    FUSBasp: TUSBasp;
+    FUSBasp: TFPUSBasp;
     FLastCharReceived: char;
     FUARTWantedState: boolean;
 
@@ -170,7 +172,7 @@ begin
   if (frmMain.FUSBasp.Connected) and (not Application.Terminated) then
   begin
     New(RawSerialDataMsg);
-    case FData[0] of
+    case FData[7] of
       0: RawSerialDataMsg^.AsString := 'IDLE';
       1: RawSerialDataMsg^.AsString := 'WRITEFLASH';
       2: RawSerialDataMsg^.AsString := 'READFLASH';
@@ -180,24 +182,24 @@ begin
       6: RawSerialDataMsg^.AsString := 'TPI_WRITE';
       7: RawSerialDataMsg^.AsString := 'UART_COM';
     end;
-    Application.QueueAsyncCall(@frmMain.USBaspMonitor, PtrUInt(RawSerialDataMsg));
+    Application.QueueAsyncCall(@frmMain.USBaspMonitor, PtrInt(RawSerialDataMsg));
   end;
 end;
 
 procedure TThreadMonitor.Execute;
 begin
   repeat
-    FDataCount := FBuffer.Read(FData, SizeOf(TByteArray));
+    FMonitorEvent.WaitFor(INFINITE);
+    FDataCount := FBuffer.Read(FData, FBuffer.Size);
     if (FDataCount > 0) and (not Application.Terminated) then
       Synchronize(@DoMonitor)
-    else
-      Sleep(2);
   until Terminated;
 end;
 
-constructor TThreadMonitor.Create(const ABuffer: TSPSCRingBuffer);
+constructor TThreadMonitor.Create(const ABuffer: TSPSCRingBuffer; const AMonitorEvent: TEvent);
 begin
   inherited Create(False);
+  FMonitorEvent := AMonitorEvent;
   FBuffer := ABuffer;
 end;
 
@@ -213,18 +215,18 @@ begin
     RawSerialDataMsg^.AsString :=
       TEncoding.ASCII.GetString(FSerialData, 0, FSerialDataCount);
     case frmMain.cbxLineBreak.ItemIndex of
-      0: Application.QueueAsyncCall(@frmMain.NoLineBreak, PtrUInt(RawSerialDataMsg));
+      0: Application.QueueAsyncCall(@frmMain.NoLineBreak, PtrInt(RawSerialDataMsg));
       1:
       begin
         RawSerialDataMsg^.BreakChar := #13;
-        Application.QueueAsyncCall(@frmMain.LineBreakCRorLF, PtrUInt(RawSerialDataMsg));
+        Application.QueueAsyncCall(@frmMain.LineBreakCRorLF, PtrInt(RawSerialDataMsg));
       end;
       2:
       begin
         RawSerialDataMsg^.BreakChar := #10;
-        Application.QueueAsyncCall(@frmMain.LineBreakCRorLF, PtrUInt(RawSerialDataMsg));
+        Application.QueueAsyncCall(@frmMain.LineBreakCRorLF, PtrInt(RawSerialDataMsg));
       end;
-      3: Application.QueueAsyncCall(@frmMain.LineBreakCRLF, PtrUInt(RawSerialDataMsg))
+      3: Application.QueueAsyncCall(@frmMain.LineBreakCRLF, PtrInt(RawSerialDataMsg))
     end;
   end;
 end;
@@ -232,17 +234,17 @@ end;
 procedure TThreadUARTRead.Execute;
 begin
   repeat
-    FSerialDataCount := FBuffer.Read(FSerialData, SizeOf(TByteArray));
+    FReceiveEvent.WaitFor(INFINITE);
+    FSerialDataCount := FBuffer.Read(FSerialData, FBuffer.Size);
     if (FSerialDataCount > 0) and (not Application.Terminated) then
       Synchronize(@DoUARTReceiveProcessing)
-    else
-      Sleep(2);
   until Terminated;
 end;
 
-constructor TThreadUARTRead.Create(const ABuffer: TSPSCRingBuffer);
+constructor TThreadUARTRead.Create(const ABuffer: TSPSCRingBuffer; const AReceiveEvent: TEvent);
 begin
   inherited Create(False);
+  FReceiveEvent:= AReceiveEvent;
   FBuffer := ABuffer;
 end;
 
@@ -272,7 +274,8 @@ begin
       FUSBasp.USBaspDevice.CrystalOsc.ToString() + ' Hz] TPI: [' +
       BoolToStr(FUSBasp.USBaspDevice.HasTPI, 'On', 'Off') + '] UART: [' +
       BoolToStr(FUSBasp.USBaspDevice.HasUart, 'On', 'Off') + '] HID UART: [' +
-      BoolToStr(FUSBasp.USBaspDevice.HasHIDUart, 'On', 'Off') + ']';
+      BoolToStr(FUSBasp.USBaspDevice.HasHIDUart, 'On', 'Off') + '] SN Write: [' +
+      BoolToStr(FUSBasp.USBaspDevice.HasSNWrite, 'On', 'Off') + ']';
   end
   else
     AppStatusBar.SimpleText := 'No USBasp Device Found';
@@ -324,8 +327,12 @@ begin
   end;
   FSendSerialData := TEncoding.ASCII.GetBytes(edtSend.Text);
   while SendCount < Length(FSendSerialData) do
+  begin
     SendCount := SendCount + FUSBasp.TransmitBuffer.Write(
       FSendSerialData[0 + SendCount], Length(FSendSerialData) - SendCount);
+    FUSBasp.TransmitEvent.SetEvent;
+  end;
+  FUSBasp.TransmitEvent.ResetEvent;
   edtSend.Text := '';
 end;
 
@@ -334,9 +341,9 @@ begin
   Caption := Application.Title;
   FLastCharReceived := #0;
 
-  FUSBasp := TUSBasp.Create();
-  FThreadUARTRead := TThreadUARTRead.Create(FUSBasp.ReceiveBuffer);
-  FThreadMonitor := TThreadMonitor.Create(FUSBasp.MonitorBuffer);
+  FUSBasp := TFPUSBasp.Create();
+  FThreadMonitor := TThreadMonitor.Create(FUSBasp.MonitorBuffer, FUSBasp.MonitorEvent);
+  FThreadUARTRead := TThreadUARTRead.Create(FUSBasp.ReceiveBuffer, FUSBasp.ReceiveEvent);
 
   if FileExists(ChangeFileExt(Application.ExeName, '.xml')) then
   begin
@@ -344,7 +351,7 @@ begin
     DefaultMonitor := dmActiveForm;
   end;
 
-  USBaspUARTAbout.ShowSplash;
+  //USBaspUARTAbout.ShowSplash;
   ToggleGUI;
 
   FUARTWantedState := False;
@@ -353,13 +360,16 @@ end;
 
 procedure TfrmMain.FormDestroy(Sender: TObject);
 begin
-  FThreadMonitor.Terminate;
-  FThreadMonitor.WaitFor;
-  FreeAndNil(FThreadMonitor);
 
+  FUSBasp.ReceiveEvent.SetEvent;
   FThreadUARTRead.Terminate;
   FThreadUARTRead.WaitFor;
   FreeAndNil(FThreadUARTRead);
+
+  FUSBasp.MonitorEvent.SetEvent;
+  FThreadMonitor.Terminate;
+  FThreadMonitor.WaitFor;
+  FreeAndNil(FThreadMonitor);
 
   FUSBasp.Free;
 end;
@@ -394,7 +404,7 @@ end;
 
 procedure TfrmMain.miAboutClick(Sender: TObject);
 begin
-  USBaspUARTAbout.ShowAbout;
+  //USBaspUARTAbout.ShowAbout;
 end;
 
 procedure TfrmMain.sbtnRefreshClick(Sender: TObject);
@@ -429,26 +439,27 @@ begin
   RawSerialDataMsg := PRawSerialDataMsg(Data)^;
   try
     FUARTLastState := RawSerialDataMsg.AsString;
-    if FUARTWantedState then
-    begin
-      if (MilliSecondsBetween(FUARTLastStateChange, Now) > 100) and
-        (FUARTLastState = 'IDLE') then
-      begin
-        if not FUSBasp.UARTOpened then
-          FUSBasp.UARTOpen(TUARTBaudRate[cbxBaudRate.ItemIndex],
-            TUARTDataBits[cbxDataBits.ItemIndex],
-            TUARTParity[cbxParity.ItemIndex], TUARTStopBit[cbxStopBits.ItemIndex]);
-      end
-      else
-      if FUSBasp.UARTOpened then
-      begin
-        FUARTLastStateChange := Now;
-        FUSBasp.UARTClose;
-      end;
-    end;
+    //if FUARTWantedState then
+    //begin
+    //  if (MilliSecondsBetween(FUARTLastStateChange, Now) > 200) and
+    //    (FUARTLastState = 'IDLE') then
+    //  begin
+    //    if not FUSBasp.UARTOpened then
+    //      FUSBasp.UARTOpen(TUARTBaudRate[cbxBaudRate.ItemIndex],
+    //        TUARTDataBits[cbxDataBits.ItemIndex],
+    //        TUARTParity[cbxParity.ItemIndex], TUARTStopBit[cbxStopBits.ItemIndex]);
+    //  end
+    //  else
+    //  if FUSBasp.UARTOpened then
+    //  begin
+    //    FUARTLastStateChange := Now;
+    //    FUSBasp.UARTClose;
+    //  end;
+    //end;
   finally
     Dispose(PRawSerialDataMsg(Data));
   end;
+  Label1.Caption:=FUARTLastState;
 end;
 
 procedure TfrmMain.ToggleGUI;

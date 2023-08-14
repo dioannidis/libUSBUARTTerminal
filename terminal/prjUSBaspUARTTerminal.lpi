@@ -19,7 +19,7 @@
       <AutoIncrementBuild Value="True"/>
       <MinorVersionNr Value="7"/>
       <RevisionNr Value="1"/>
-      <BuildNr Value="18"/>
+      <BuildNr Value="56"/>
       <StringTable FileDescription="FPUSBasp GUI UART Terminal" InternalName="prjFPUSBaspUARTTerminal" LegalCopyright="© 2022 Dimitrios Chr. Ioannidis" LegalTrademarks="© 2022 Dimitrios Chr. Ioannidis" OriginalFilename="prjFPUSBaspUARTTerminal.exe" ProductName="FPUSBasp GUI UART Terminal" ProductVersion="0.5"/>
     </VersionInfo>
     <BuildModes Count="4">
@@ -47,6 +47,7 @@
           <Linking>
             <Debugging>
               <GenerateDebugInfo Value="False"/>
+              <DebugInfoType Value="dsDwarf3"/>
               <StripSymbols Value="True"/>
             </Debugging>
             <LinkSmart Value="True"/>
@@ -151,17 +152,10 @@
         <Mode0 Name="default"/>
       </Modes>
     </RunParams>
-    <RequiredPackages Count="3">
+    <RequiredPackages Count="1">
       <Item1>
-        <PackageName Value="splashabout"/>
-      </Item1>
-      <Item2>
-        <PackageName Value="hidapi_pkg"/>
-        <MinVersion Minor="4" Valid="True"/>
-      </Item2>
-      <Item3>
         <PackageName Value="LCL"/>
-      </Item3>
+      </Item1>
     </RequiredPackages>
     <Units Count="2">
       <Unit0>
@@ -207,7 +201,7 @@
     </CodeGeneration>
     <Linking>
       <Debugging>
-        <DebugInfoType Value="dsDwarf2"/>
+        <DebugInfoType Value="dsDwarf3"/>
         <UseHeaptrc Value="True"/>
         <UseExternalDbgSyms Value="True"/>
       </Debugging>

@@ -6,7 +6,7 @@ unit USBasp;
 
   USBasp Class.
 
-  Copyright (C) 2022 Dimitrios Chr. Ioannidis.
+  Copyright (C) 2022 - 2023 Dimitrios Chr. Ioannidis.
     Nephelae - https://www.nephelae.eu
 
   https://www.nephelae.eu/
@@ -31,12 +31,8 @@ unit USBasp;
 interface
 
 uses
-  Classes, SysUtils,
-  SPSCRingBuffer,
-  USBasp_Definitions,
-  USBasp_LIBUSB,
-  USBasp_HIDAPI,
-  USBasp_Threads;
+  Classes, SysUtils, syncobjs, hidapi,
+  SPSCRingBuffer, USBasp_Definitions, USBasp_Threads;
 
 const
   TUARTBaudRate: array[0..13] of integer =
@@ -54,22 +50,25 @@ const
 
 type
 
-  { TUSBasp }
+  { TFPUSBasp }
 
-  TUSBasp = class(TObject)
+  TFPUSBasp = class(TObject)
   private
+    FMonitorReadEvent, FReceiveReadEvent, FTransmitWriteEvent: TEvent;
     FUSBaspID: byte;
-    FUSBDevices: TUSBasp_USBDeviceList;
-    FHidDevices: TUSBasp_HIDDeviceList;
-    FUSBaspDeviceSelected: TUSBasp_USBDevice;
+    FUSBaspList: TUSBaspList;
+    FUSBaspHIDIntfList: TUSBaspHIDIntfList;
+    FUSBaspDeviceSelected: TUSBasp;
     FConnected: boolean;
     FUARTOpened: boolean;
     FLastUsbError: integer;
-    FReceiveBuffer, FTransmitBuffer, FMonitorBuffer: TSPSCRingBuffer;
-    FReceiveThread: TThreadHID_UARTRead;
-    FTransmitThread: TThreadHID_UARTWrite;
-    FMonitorThread: TThreadHID_Read;
+    FUARTReceiveBuffer, FUARTTransmitBuffer, FMonitorReadBuffer,
+    FFeatureWriteBuffer: TSPSCRingBuffer;
+    FUARTReceiveThread: TThreadHID_UARTRead;
+    FUARTTransmitThread: TThreadHID_UARTWrite;
+    FMonitorReadThread: TThreadHID_Read;
     procedure SetUSBaspID(const AValue: byte);
+    function USBaspHIDIntfs(var AUSBaspHIDDeviceList: TUSBaspHIDIntfList): integer;
   public
     constructor Create;
     destructor Destroy; override;
@@ -85,200 +84,294 @@ type
     property Connected: boolean read FConnected;
     property UARTOpened: boolean read FUARTOpened;
 
-    property ReceiveBuffer: TSPSCRingBuffer read FReceiveBuffer;
-    property TransmitBuffer: TSPSCRingBuffer read FTransmitBuffer;
-    property MonitorBuffer: TSPSCRingBuffer read FMonitorBuffer;
+    property ReceiveBuffer: TSPSCRingBuffer read FUARTReceiveBuffer;
+    property ReceiveEvent: TEvent read FReceiveReadEvent;
+
+    property TransmitBuffer: TSPSCRingBuffer read FUARTTransmitBuffer;
+    property TransmitEvent: TEvent read FTransmitWriteEvent;
+
+    property MonitorBuffer: TSPSCRingBuffer read FMonitorReadBuffer;
+    property MonitorEvent: TEvent read FMonitorReadEvent;
 
     property USBaspID: byte read FUSBaspID write SetUSBaspID;
-    property USBaspDevice: TUSBasp_USBDevice read FUSBaspDeviceSelected;
-    property USBaspDevices: TUSBasp_USBDeviceList read FUSBDevices;
+    property USBaspDevice: TUSBasp read FUSBaspDeviceSelected;
+    property USBaspDevices: TUSBaspList read FUSBaspList;
   end;
 
 implementation
 
+uses
+  StrUtils;
+
 { TFPUSBasp }
 
-constructor TUSBasp.Create;
+constructor TFPUSBasp.Create;
 begin
-  usbasp_libusb_initialization;
+  FUSBaspList := TUSBaspList.Create;
+  FUSBaspHIDIntfList := TUSBaspHIDIntfList.Create;
 
-  FUSBDevices := TUSBasp_USBDeviceList.Create;
-  FHidDevices := TUSBasp_HIDDeviceList.Create;
-
-  FReceiveBuffer := TSPSCRingBuffer.Create(8192);
-  FTransmitBuffer := TSPSCRingBuffer.Create(8192);
-  FMonitorBuffer := TSPSCRingBuffer.Create(64);
+  FUARTReceiveBuffer := TSPSCRingBuffer.Create(512);
+  FUARTTransmitBuffer := TSPSCRingBuffer.Create(512);
+  FMonitorReadBuffer := TSPSCRingBuffer.Create(512);
 
   FUSBaspID := USBaspIDNotFound;
   FConnected := False;
   FUARTOpened := False;
+
+  FMonitorReadEvent := TEvent.Create(nil, True, False, 'MONRD');
+  FReceiveReadEvent := TEvent.Create(nil, True, False, 'RCDRD');
+  FTransmitWriteEvent := TEvent.Create(nil, True, False, 'TRNWR');
 end;
 
-destructor TUSBasp.Destroy;
+destructor TFPUSBasp.Destroy;
 begin
   UARTClose();
   Disconnect;
 
-  FreeAndNil(FReceiveBuffer);
-  FreeAndNil(FTransmitBuffer);
-  FreeAndNil(FMonitorBuffer);
+  FreeAndNil(FUARTReceiveBuffer);
+  FreeAndNil(FUARTTransmitBuffer);
+  FreeAndNil(FMonitorReadBuffer);
 
-  FHidDevices.Free;
-  FUSBDevices.Free;
+  FUSBaspHIDIntfList.Free;
+  FUSBaspList.Free;
 
-  usbasp_libusb_finalization;
+  FMonitorReadEvent.Free;
+  FReceiveReadEvent.Free;
+  FTransmitWriteEvent.Free;
 
   inherited Destroy;
 end;
 
-function TUSBasp.Connect(const AUSBaspDeviceID: byte = 0): boolean;
+function TFPUSBasp.Connect(const AUSBaspDeviceID: byte = 0): boolean;
+var
+  tmp: PUSBasp;
 begin
-  if (not FConnected) and (FUSBDevices.Count > 0) and
-    (AUSBaspDeviceID in [0..(FUSBDevices.Count - 1)]) then
+  if (not FConnected) and (FUSBaspList.Count > 0) and
+    (AUSBaspDeviceID in [0..(FUSBaspList.Count - 1)]) then
   begin
     FUSBaspID := AUSBaspDeviceID;
-    FUSBaspDeviceSelected := FUSBDevices[FUSBaspID]^;
-    if FUSBaspDeviceSelected.HasHIDUart and
-      Assigned(FUSBDevices[FUSBaspID]^.MonitorHidDevice) then
+    FUSBaspDeviceSelected := FUSBaspList[FUSBaspID]^;
+    if FUSBaspList[FUSBaspID]^.HasMonitorIntf then
     begin
-      usbasp_hidapi_open(FUSBDevices[FUSBaspID]^.MonitorHidDevice);
-      FMonitorThread := TThreadHID_Read.Create(FUSBDevices[FUSBaspID]^.MonitorHidDevice,
-        FMonitorBuffer);
-    end;
-    if FLastUsbError < 0 then
-    begin
+      FUSBaspList[FUSBaspID]^.MonitorInterface^.Device :=
+        THidDevice.OpenPath(FUSBaspList[FUSBaspID]^.MonitorInterface^.Path);
 
-    end
-    else
-      FConnected := True;
+      FUSBaspList[FUSBaspID]^.MonitorInterface^.Device^.SetNonBlocking(0);
+
+      FMonitorReadThread := TThreadHID_Read.Create(
+        FUSBaspList[FUSBaspID]^.MonitorInterface, FMonitorReadBuffer,
+        FMonitorReadEvent);
+    end;
+    FConnected := True;
   end;
   Result := FConnected;
 end;
 
-function TUSBasp.Disconnect: boolean;
+function TFPUSBasp.Disconnect: boolean;
 begin
   if FConnected then
   begin
     if FUARTOpened then
       UARTClose;
 
-    //usbasp_hidapi_close(FUSBDevices[FUSBaspID]^.HidDevice);
-
-    if Assigned(FUSBDevices[FUSBaspID]^.MonitorHidDevice) then
+    if FUSBaspList[FUSBaspID]^.HasMonitorIntf then
     begin
-      FMonitorThread.Terminate;
-      FMonitorThread.WaitFor;
-      FreeAndNil(FMonitorThread);
-
-      usbasp_hidapi_close(FUSBDevices[FUSBaspID]^.MonitorHidDevice);
+      FMonitorReadThread.Terminate;
+      FMonitorReadThread.WaitFor;
+      FreeAndNil(FMonitorReadThread);
+      FUSBaspList[FUSBaspID]^.MonitorInterface^.Device^.Close;
     end;
 
-    if FLastUsbError < 0 then
-    begin
-
-    end
-    else
-      FConnected := False;
+    FConnected := False;
   end;
   Result := FConnected;
 end;
 
-function TUSBasp.UARTOpen(const ABaudRate, ADataBits, AParity, AStopBits:
-  integer): boolean;
+function TFPUSBasp.UARTOpen(const ABaudRate, ADataBits, AParity,
+  AStopBits: integer): boolean;
 var
-  Buffer: array[0..7] of byte = (0, 0, 0, 0, 0, 0, 0, 0);
+  Buffer: array[0..8] of byte = (0, 0, 0, 0, 0, 0, 0, 0, 0);
   Prescaler: word;
 begin
-  if FConnected and (FUSBaspDeviceSelected.HasUart or
-    FUSBaspDeviceSelected.HasHIDUart) and not FUARTOpened then
+  if FConnected and not FUARTOpened then
   begin
-    usbasp_hidapi_open(FUSBDevices[FUSBaspID]^.HidDevice);
+    FUSBaspList[FUSBaspID]^.UARTInterface^.Device :=
+      THidDevice.OpenPath(FUSBaspList[FUSBaspID]^.UARTInterface^.Path);
 
-    Prescaler := FUSBDevices[FUSBaspID]^.CrystalOsc div 8 div ABaudRate - 1;
+    FUSBaspList[FUSBaspID]^.UARTInterface^.Device^.SetNonBlocking(0);
 
-    Buffer[0] := lo(Prescaler);
-    Buffer[1] := hi(Prescaler);
-    Buffer[2] := ADataBits or AStopBits or AParity;
+    Prescaler := FUSBaspList[FUSBaspID]^.CrystalOsc div 8 div ABaudRate - 1;
 
-    FReceiveThread := TThreadHID_UARTRead.Create(FUSBDevices[FUSBaspID]^.HidDevice,
-      FReceiveBuffer);
-    FTransmitThread := TThreadHID_UARTWrite.Create(FUSBDevices[FUSBaspID]^.HidDevice,
-      FTransmitBuffer);
+    Buffer[0] := 0;
+    Buffer[1] := lo(Prescaler);
+    Buffer[2] := hi(Prescaler);
+    Buffer[3] := ADataBits or AStopBits or AParity;
 
-    usbasp_hidapi_uart_set_conf(FUSBDevices[FUSBaspID]^.HidDevice, Buffer);
+
+    FUSBaspList[FUSBaspID]^.UARTInterface^.Device^.SendFeatureReport(Buffer,
+      FUSBaspList[FUSBaspID]^.UARTInterface^.ReportSize + 1);
+
+    FUARTReceiveThread := TThreadHID_UARTRead.Create(
+      FUSBaspList[FUSBaspID]^.UARTInterface, FUARTReceiveBuffer, FReceiveReadEvent);
+    FUARTTransmitThread := TThreadHID_UARTWrite.Create(
+      FUSBaspList[FUSBaspID]^.UARTInterface, FUARTTransmitBuffer, FTransmitWriteEvent);
 
     FUARTOpened := True;
-
   end;
+
   Result := FUARTOpened;
 end;
 
-function TUSBasp.UARTClose: boolean;
+function TFPUSBasp.UARTClose: boolean;
 var
-  Buffer: array[0..7] of byte = (0, 0, 0, 0, 0, 0, 0, 0);
+  Buffer: array[0..8] of byte = (0, 0, 0, 0, 0, 0, 0, 0, 0);
 begin
-  if FConnected and (FUSBaspDeviceSelected.HasUart or
-    FUSBaspDeviceSelected.HasHIDUart) and FUARTOpened then
+  if FConnected and FUARTOpened then
   begin
 
     Buffer[0] := 0;
     Buffer[1] := 0;
     Buffer[2] := 0;
+    Buffer[3] := 0;
 
-    usbasp_hidapi_uart_set_conf(FUSBDevices[FUSBaspID]^.HidDevice, Buffer);
+    FUSBaspList[FUSBaspID]^.UARTInterface^.Device^.SendFeatureReport(Buffer,
+      FUSBaspList[FUSBaspID]^.UARTInterface^.ReportSize + 1);
 
-    Sleep(100);
+    FUARTReceiveThread.Terminate;
+    FUARTReceiveThread.WaitFor;
+    FreeAndNil(FUARTReceiveThread);
 
-    FReceiveThread.Terminate;
-    FReceiveThread.WaitFor;
-    FreeAndNil(FReceiveThread);
+    FUARTTransmitThread.Terminate;
+    FTransmitWriteEvent.SetEvent;
+    FUARTTransmitThread.WaitFor;
+    FreeAndNil(FUARTTransmitThread);
 
-    FTransmitThread.Terminate;
-    FTransmitThread.WaitFor;
-    FreeAndNil(FTransmitThread);
-
-    usbasp_hidapi_close(FUSBDevices[FUSBaspID]^.HidDevice);
+    FUSBaspList[FUSBaspID]^.UARTInterface^.Device^.Close;
 
     FUARTOpened := False;
   end;
+
   Result := FUARTOpened;
 end;
 
-procedure TUSBasp.SetUSBaspID(const AValue: byte);
+procedure TFPUSBasp.SetUSBaspID(const AValue: byte);
 begin
   if FUSBaspID = AValue then
     Exit;
-  if FConnected or (FUSBDevices.Count = 0) then
+  if FConnected or (FUSBaspList.Count = 0) then
     Exit;
-  if AValue in [0..(FUSBDevices.Count - 1)] then
+  if AValue in [0..(FUSBaspList.Count - 1)] then
   begin
     FUSBaspID := AValue;
-    FUSBaspDeviceSelected := FUSBDevices[FUSBaspID]^;
+    FUSBaspDeviceSelected := FUSBaspList[FUSBaspID]^;
   end;
 end;
 
-function TUSBasp.EnumerateDevices: integer;
+function TFPUSBasp.USBaspHIDIntfs(var AUSBaspHIDDeviceList:
+  TUSBaspHIDIntfList): integer;
 var
-  USBDevice: PUSBasp_USBDevice;
-  HIDDevice: PUSBasp_HIDDevice;
+  HidEnumerateList, HidItem: PHidDeviceInfo;
+  USBaspHIDDevice: PUSBaspHIDIntf = nil;
+  tmpHidDevice: PHidDevice;
+  index: byte;
+begin
+  AUSBaspHIDDeviceList.FreeItems;
+  AUSBaspHIDDeviceList.Clear;
+  try
+    HidEnumerateList := THidDeviceInfo.Enumerate(USBASP_SHARED_VID, USBASP_SHARED_PID);
+    HidItem := HidEnumerateList;
+    index := 0;
+    while Assigned(HidItem) do
+    begin
+      New(USBaspHIDDevice);
+      USBaspHIDDevice^.index := index;
+      USBaspHIDDevice^.Path := HidItem^.Path;
+      USBaspHIDDevice^.Serial := PCWCharToUnicodeString(HidItem^.SerialNumber);
+      USBaspHIDDevice^.Manufacturer :=
+        PCWCharToUnicodeString(HidItem^.ManufacturerString);
+      USBaspHIDDevice^.Product := PCWCharToUnicodeString(HidItem^.ProductString);
+      USBaspHIDDevice^.InterfaceNumber := HidItem^.InterfaceNumber;
+      USBaspHIDDevice^.VendorID := HidItem^.VendorID;
+      USBaspHIDDevice^.ProductID := HidItem^.ProductID;
+      USBaspHIDDevice^.FirmwareVersion :=
+        ReverseString(ReverseString(BCDToInt(HidItem^.ReleaseNumber).ToString()).Insert(2, '.'));
+      USBaspHIDDevice^.Capabilities := '';
+      USBaspHIDDevice^.ReportSize := 8;
+      USBaspHIDDevice^.PacketCount := 1;
+
+      tmpHidDevice := THidDevice.OpenPath(HidItem^.Path);
+      USBaspHIDDevice^.ContainerID := tmpHidDevice^.GetContainerID;
+      tmpHidDevice^.Close;
+
+      tmpHidDevice := nil;
+
+      AUSBaspHIDDeviceList.Add(USBaspHIDDevice);
+      HidItem := HidItem^.Next;
+      Inc(Index);
+    end;
+  finally
+    HidEnumerateList^.Free;
+  end;
+  Result := AUSBaspHIDDeviceList.Count;
+end;
+
+function TFPUSBasp.EnumerateDevices: integer;
+var
+  USBasp: PUSBasp;
+  USBaspHIDIntf: PUSBaspHIDIntf;
+  USBaspFound: boolean;
 begin
   Result := 0;
   if not FConnected then
   begin
-    Result := usbasp_libusb_devices(FUSBDevices);
-    usbasp_hidapi_devices(FHidDevices);
-    for USBDevice in FUSBDevices do
-      for HidDevice in FHidDevices do
+    if USBaspHIDIntfs(FUSBaspHIDIntfList) > 0 then
+    begin
+      for USBaspHIDIntf in FUSBaspHIDIntfList do
       begin
-        if IsEqualGUID(HIDDevice^.ContainerID, USBDevice^.ContainerID) then
-          case HIDDevice^.InterfaceNumber of
-            1: USBDevice^.HidDevice := HidDevice;
-            2: USBDevice^.MonitorHidDevice := HIDDevice;
+        USBaspFound := False;
+        for USBasp in FUSBaspList do
+          if IsEqualGUID(USBasp^.ContainerID, USBaspHIDIntf^.ContainerID) then
+          begin
+            USBaspFound := True;
+            Break;
           end;
+        if not USBaspFound then
+        begin
+          New(USBasp);
+          USBasp^.ContainerID := USBaspHIDIntf^.ContainerID;
+          USBasp^.Manufacturer := USBaspHIDIntf^.Manufacturer;
+          USBasp^.ProductName := USBaspHIDIntf^.Product;
+          USBasp^.SerialNumber := USBaspHIDIntf^.Serial;
+          USBasp^.HasMonitorIntf := False;
+          USBasp^.HasHIDUart := False;
+
+          USBasp^.CrystalOsc := 12000000;
+          USBasp^.HasUart := False;
+
+          FUSBaspList.Add(USBasp);
+        end;
+        case USBaspHIDIntf^.InterfaceNumber of
+          1: begin
+            USBasp^.UARTInterface := USBaspHIDIntf;
+            USBasp^.HasHIDUart := True;
+          end;
+          2: begin
+            USBasp^.MonitorInterface := USBaspHIDIntf;
+            USBasp^.HasMonitorIntf := True;
+          end;
+        end;
       end;
+    end;
   end;
+  Result := FUSBaspList.Count;
   if Result = 0 then
     FUSBaspID := USBaspIDNotFound;
 end;
+
+initialization
+  HidInit();
+
+finalization;
+  HidExit();
 
 end.
