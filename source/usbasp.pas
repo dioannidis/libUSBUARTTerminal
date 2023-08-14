@@ -110,9 +110,9 @@ begin
   FUSBaspList := TUSBaspList.Create;
   FUSBaspHIDIntfList := TUSBaspHIDIntfList.Create;
 
-  FUARTReceiveBuffer := TSPSCRingBuffer.Create(512);
-  FUARTTransmitBuffer := TSPSCRingBuffer.Create(512);
-  FMonitorReadBuffer := TSPSCRingBuffer.Create(512);
+  FUARTReceiveBuffer := TSPSCRingBuffer.Create(8192);
+  FUARTTransmitBuffer := TSPSCRingBuffer.Create(8192);
+  FMonitorReadBuffer := TSPSCRingBuffer.Create(32);
 
   FUSBaspID := USBaspIDNotFound;
   FConnected := False;
