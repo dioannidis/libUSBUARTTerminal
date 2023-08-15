@@ -68,7 +68,7 @@ type
     FUARTTransmitThread: TThreadHID_UARTWrite;
     FMonitorReadThread: TThreadHID_Read;
     procedure SetUSBaspID(const AValue: byte);
-    function USBaspHIDIntfs(var AUSBaspHIDDeviceList: TUSBaspHIDIntfList): integer;
+    function USBaspEnumerateHIDIntfs(var AUSBaspHIDDeviceList: TUSBaspHIDIntfList): integer;
   public
     constructor Create;
     destructor Destroy; override;
@@ -110,8 +110,8 @@ begin
   FUSBaspList := TUSBaspList.Create;
   FUSBaspHIDIntfList := TUSBaspHIDIntfList.Create;
 
-  FUARTReceiveBuffer := TSPSCRingBuffer.Create(8192);
-  FUARTTransmitBuffer := TSPSCRingBuffer.Create(8192);
+  FUARTReceiveBuffer := TSPSCRingBuffer.Create(65536);
+  FUARTTransmitBuffer := TSPSCRingBuffer.Create(65536);
   FMonitorReadBuffer := TSPSCRingBuffer.Create(32);
 
   FUSBaspID := USBaspIDNotFound;
@@ -143,8 +143,6 @@ begin
 end;
 
 function TFPUSBasp.Connect(const AUSBaspDeviceID: byte = 0): boolean;
-var
-  tmp: PUSBasp;
 begin
   if (not FConnected) and (FUSBaspList.Count > 0) and
     (AUSBaspDeviceID in [0..(FUSBaspList.Count - 1)]) then
@@ -267,7 +265,7 @@ begin
   end;
 end;
 
-function TFPUSBasp.USBaspHIDIntfs(var AUSBaspHIDDeviceList:
+function TFPUSBasp.USBaspEnumerateHIDIntfs(var AUSBaspHIDDeviceList:
   TUSBaspHIDIntfList): integer;
 var
   HidEnumerateList, HidItem: PHidDeviceInfo;
@@ -324,7 +322,7 @@ begin
   Result := 0;
   if not FConnected then
   begin
-    if USBaspHIDIntfs(FUSBaspHIDIntfList) > 0 then
+    if USBaspEnumerateHIDIntfs(FUSBaspHIDIntfList) > 0 then
     begin
       for USBaspHIDIntf in FUSBaspHIDIntfList do
       begin
