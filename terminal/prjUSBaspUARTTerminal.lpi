@@ -16,7 +16,7 @@
       <UseVersionInfo Value="True"/>
       <AutoIncrementBuild Value="True"/>
       <MinorVersionNr Value="8"/>
-      <BuildNr Value="68"/>
+      <BuildNr Value="71"/>
       <StringTable FileDescription="FPUSBasp GUI UART Terminal" InternalName="prjFPUSBaspUARTTerminal" LegalCopyright="© 2022 - 2023 Dimitrios Chr. Ioannidis" LegalTrademarks="© 2022 - 2023 Dimitrios Chr. Ioannidis" OriginalFilename="prjFPUSBaspUARTTerminal.exe" ProductName="FPUSBasp GUI UART Terminal" ProductVersion="0.5"/>
     </VersionInfo>
     <BuildModes Count="4">
@@ -30,7 +30,7 @@
           </Target>
           <SearchPaths>
             <IncludeFiles Value="$(ProjOutDir)"/>
-            <OtherUnitFiles Value="..\source"/>
+            <OtherUnitFiles Value="..\source;..\source\splashabout;..\source\poweredby"/>
             <UnitOutputDirectory Value="lib\$(TargetCPU)-$(TargetOS)\$(BuildMode)"/>
           </SearchPaths>
           <Conditionals Value="if TargetOS = 'linux' then
@@ -65,7 +65,7 @@
           </Target>
           <SearchPaths>
             <IncludeFiles Value="$(ProjOutDir)"/>
-            <OtherUnitFiles Value="..\source"/>
+            <OtherUnitFiles Value="..\source;..\source\splashabout;..\source\poweredby"/>
             <UnitOutputDirectory Value="lib\$(TargetCPU)-$(TargetOS)\$(BuildMode)"/>
           </SearchPaths>
           <Conditionals Value="if TargetOS = 'linux' then
@@ -112,7 +112,7 @@
           </Target>
           <SearchPaths>
             <IncludeFiles Value="$(ProjOutDir)"/>
-            <OtherUnitFiles Value="..\source"/>
+            <OtherUnitFiles Value="..\source;..\source\splashabout;..\source\poweredby"/>
             <UnitOutputDirectory Value="lib\$(TargetCPU)-$(TargetOS)\$(BuildMode)"/>
           </SearchPaths>
           <Conditionals Value="if TargetOS = 'linux' then
@@ -149,10 +149,13 @@
         <Mode0 Name="default"/>
       </Modes>
     </RunParams>
-    <RequiredPackages Count="1">
+    <RequiredPackages Count="2">
       <Item1>
-        <PackageName Value="LCL"/>
+        <PackageName Value="IDEIntf"/>
       </Item1>
+      <Item2>
+        <PackageName Value="LCL"/>
+      </Item2>
     </RequiredPackages>
     <Units Count="2">
       <Unit0>
@@ -177,7 +180,7 @@
     </Target>
     <SearchPaths>
       <IncludeFiles Value="$(ProjOutDir)"/>
-      <OtherUnitFiles Value="..\source"/>
+      <OtherUnitFiles Value="..\source;..\source\splashabout;..\source\poweredby"/>
       <UnitOutputDirectory Value="lib\$(TargetCPU)-$(TargetOS)\$(BuildMode)"/>
     </SearchPaths>
     <Conditionals Value="if TargetOS = 'linux' then

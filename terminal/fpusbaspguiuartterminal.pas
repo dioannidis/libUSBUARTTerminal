@@ -33,7 +33,7 @@ interface
 uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, StdCtrls, Menus,
   ComCtrls, ComboEx, ExtCtrls, MaskEdit, XMLPropStorage, Buttons,
-  DateUtils, syncobjs, USBasp, SPSCRingBuffer;
+  DateUtils, syncobjs, uSplashAbout, USBasp, SPSCRingBuffer;
 
 type
 
@@ -113,12 +113,14 @@ type
     lblUSBaspDevice: TLabel;
     AppMainMenu: TMainMenu;
     medtMemoBufferLines: TMaskEdit;
+    miAbout: TMenuItem;
     mmDisplay: TMemo;
     miFile: TMenuItem;
     miExit: TMenuItem;
     sbtnRefresh: TSpeedButton;
     AppStatusBar: TStatusBar;
     AppXMLPropStorage: TXMLPropStorage;
+    SplashAbout: TSplashAbout;
     procedure btnClearMemoClick(Sender: TObject);
     procedure btnCloseClick(Sender: TObject);
     procedure btnConnectClick(Sender: TObject);
@@ -132,6 +134,7 @@ type
     procedure FormDestroy(Sender: TObject);
     procedure FormKeyPress(Sender: TObject; var Key: char);
     procedure medtMemoBufferLinesChange(Sender: TObject);
+    procedure miAboutClick(Sender: TObject);
     procedure mmDisplayChange(Sender: TObject);
     procedure miExitClick(Sender: TObject);
     procedure sbtnRefreshClick(Sender: TObject);
@@ -185,6 +188,8 @@ begin
       4: RawMonitorDataMsg^.ProgrammerState := 'PRG WRITEEEPROM';
       5: RawMonitorDataMsg^.ProgrammerState := 'PRG TPI_READ';
       6: RawMonitorDataMsg^.ProgrammerState := 'PRG TPI_WRITE';
+      else
+        RawMonitorDataMsg^.ProgrammerState := 'PRG UNKNOWN';
     end;
     if (FData[7] and 16) = 16 then
       RawMonitorDataMsg^.UARTState := 'UART Enabled'
@@ -353,6 +358,18 @@ begin
     DefaultMonitor := dmActiveForm;
   end;
 
+  SplashAbout := TSplashAbout.Create(Self);
+  SplashAbout.DelaySeconds := 5;
+  SplashAbout.Author := 'Dimitrios Chr. Ioannidis';
+  SplashAbout.LicenseFile := saMIT;
+  SplashAbout.UserTitle := 'USBasp UART Terminal';
+  SplashAbout.Description :=
+    'An Object Pascal UART terminal for USBasp UART firmware .';
+  SplashAbout.ShowDescription := True;
+  SplashAbout.BackGroundColor := clDefault;
+
+  SplashAbout.ShowSplash;
+
   ToggleGUI;
 
   FUARTWantedState := False;
@@ -385,6 +402,12 @@ procedure TfrmMain.medtMemoBufferLinesChange(Sender: TObject);
 begin
   if StrToInt(medtMemoBufferLines.Text) < 100 then
     medtMemoBufferLines.Text := '100';
+end;
+
+procedure TfrmMain.miAboutClick(Sender: TObject);
+begin
+  SplashAbout.ShowDescription := False;
+  SplashAbout.ShowAbout;
 end;
 
 procedure TfrmMain.mmDisplayChange(Sender: TObject);
@@ -435,7 +458,8 @@ begin
 
   RawMonitorDataMsg := PRawMonitorDataMsg(Data)^;
   try
-    FUARTLastState := RawMonitorDataMsg.UARTState + ' | ' + RawMonitorDataMsg.ProgrammerState;
+    FUARTLastState := RawMonitorDataMsg.UARTState + ' | ' +
+      RawMonitorDataMsg.ProgrammerState;
     //if FUARTWantedState then
     //begin
     //  if (MilliSecondsBetween(FUARTLastStateChange, Now) > 200) and
@@ -456,7 +480,10 @@ begin
   finally
     Dispose(PRawMonitorDataMsg(Data));
   end;
-  Label1.Caption := FUARTLastState;
+  if FUSBasp.Connected then
+    Label1.Caption := FUARTLastState
+  else
+    Label1.Caption := '';
 end;
 
 procedure TfrmMain.ToggleGUI;

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CONFIG>
+  <Package Version="4">
+    <PathDelim Value="\"/>
+    <Name Value="splashabout"/>
+    <Type Value="RunAndDesignTime"/>
+    <Author Value="Gordon Bamber (minesadorada@charcodelvalle.com)"/>
+    <CompilerOptions>
+      <Version Value="11"/>
+      <PathDelim Value="\"/>
+      <SearchPaths>
+        <UnitOutputDirectory Value="lib\$(TargetCPU)-$(TargetOS)"/>
+      </SearchPaths>
+      <Linking>
+        <Debugging>
+          <GenerateDebugInfo Value="False"/>
+        </Debugging>
+      </Linking>
+    </CompilerOptions>
+    <Description Value="Two methods: SplashAbout1.ShowSplash (in form1.create method) and SplashAbout1.ShowAbout.
+Windows are created on-the-fly and destroyed on close.
+"/>
+    <License Value="LGPL
+Use and abuse as you will."/>
+    <Version Major="1" Minor="2" Release="1" Build="2"/>
+    <Files Count="2">
+      <Item1>
+        <Filename Value="usplashabout.pas"/>
+        <HasRegisterProc Value="True"/>
+        <UnitName Value="usplashabout"/>
+      </Item1>
+      <Item2>
+        <Filename Value="uversion.pas"/>
+        <UnitName Value="uversion"/>
+      </Item2>
+    </Files>
+    <RequiredPkgs Count="2">
+      <Item1>
+        <PackageName Value="poweredby"/>
+      </Item1>
+      <Item2>
+        <PackageName Value="IDEIntf"/>
+      </Item2>
+    </RequiredPkgs>
+    <UsageOptions>
+      <UnitPath Value="$(PkgOutDir)"/>
+    </UsageOptions>
+    <PublishOptions>
+      <Version Value="2"/>
+    </PublishOptions>
+  </Package>
+</CONFIG>

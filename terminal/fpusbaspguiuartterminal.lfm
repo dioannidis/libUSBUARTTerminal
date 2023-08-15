@@ -201,7 +201,6 @@ object frmMain: TfrmMain
         Top = 59
         Width = 62
         Alignment = taRightJustify
-        CharCase = ecNormal
         MaxLength = 3
         TabOrder = 2
         OnChange = medtMemoBufferLinesChange
@@ -449,6 +448,10 @@ object frmMain: TfrmMain
         Caption = 'Exit'
         OnClick = miExitClick
       end
+    end
+    object miAbout: TMenuItem
+      Caption = 'About'
+      OnClick = miAboutClick
     end
   end
   object AppXMLPropStorage: TXMLPropStorage
