@@ -33,7 +33,7 @@ interface
 
 uses
   Classes, SysUtils, syncobjs,
-  {USBasp_HIDAPI,} USBasp_Definitions, SPSCRingBuffer;
+  USBasp_Definitions, SPSCRingBuffer;
 
 type
 
