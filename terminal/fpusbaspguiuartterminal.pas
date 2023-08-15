@@ -103,7 +103,6 @@ type
     gbNoRuntimeSettings: TGroupBox;
     gbRuntimeSettings: TGroupBox;
     gbUART: TGroupBox;
-    Label1: TLabel;
     lblBaud: TLabel;
     lblStopBits: TLabel;
     lblParity: TLabel;
@@ -282,18 +281,18 @@ begin
   if FUSBasp.USBaspDevices.Count > 0 then
   begin
     FUSBasp.USBaspID := cbxUSBaspDevice.ItemIndex;
-    AppStatusBar.SimpleText :=
-      'Product: [' + FUSBasp.USBaspDevice.ProductName + '] Manufacturer: [' +
-      FUSBasp.USBaspDevice.Manufacturer + '] Serial number: [' +
-      FUSBasp.USBaspDevice.SerialNumber + '] Crystal: [' +
-      FUSBasp.USBaspDevice.CrystalOsc.ToString() + ' Hz] TPI: [' +
-      BoolToStr(FUSBasp.USBaspDevice.HasTPI, 'On', 'Off') + '] UART: [' +
-      BoolToStr(FUSBasp.USBaspDevice.HasUart, 'On', 'Off') + '] HID UART: [' +
-      BoolToStr(FUSBasp.USBaspDevice.HasHIDUart, 'On', 'Off') +
-      '] SN Write: [' + BoolToStr(FUSBasp.USBaspDevice.HasSNWrite, 'On', 'Off') + ']';
-  end
-  else
-    AppStatusBar.SimpleText := 'No USBasp Device Found';
+    //AppStatusBar.SimpleText :=
+    //  'Product: [' + FUSBasp.USBaspDevice.ProductName + '] Manufacturer: [' +
+    //  FUSBasp.USBaspDevice.Manufacturer + '] Serial number: [' +
+    //  FUSBasp.USBaspDevice.SerialNumber + '] Crystal: [' +
+    //  FUSBasp.USBaspDevice.CrystalOsc.ToString() + ' Hz] TPI: [' +
+    //  BoolToStr(FUSBasp.USBaspDevice.HasTPI, 'On', 'Off') + '] UART: [' +
+    //  BoolToStr(FUSBasp.USBaspDevice.HasUart, 'On', 'Off') + '] HID UART: [' +
+    //  BoolToStr(FUSBasp.USBaspDevice.HasHIDUart, 'On', 'Off') +
+    //  '] SN Write: [' + BoolToStr(FUSBasp.USBaspDevice.HasSNWrite, 'On', 'Off') + ']';
+  end;
+  //else
+  //  AppStatusBar.SimpleText := 'No USBasp Device Found';
   ToggleGUI;
 end;
 
@@ -438,7 +437,7 @@ begin
   begin
     for i := 0 to FUSBasp.USBaspDevices.Count - 1 do
       cbxUSBaspDevice.AddItem(FUSBasp.USBaspDevices[i]^.ProductName +
-        ' [' + FUSBasp.USBaspDevices[i]^.Manufacturer + ']', nil);
+        ' [' + FUSBasp.USBaspDevices[i]^.SerialNumber + ']', nil);
     cbxUSBaspDevice.ItemIndex := 0;
     cbxUSBaspDeviceChange(self);
   end
@@ -481,9 +480,9 @@ begin
     Dispose(PRawMonitorDataMsg(Data));
   end;
   if FUSBasp.Connected then
-    Label1.Caption := FUARTLastState
+    AppStatusBar.SimpleText := FUARTLastState
   else
-    Label1.Caption := '';
+    AppStatusBar.SimpleText := '';
 end;
 
 procedure TfrmMain.ToggleGUI;

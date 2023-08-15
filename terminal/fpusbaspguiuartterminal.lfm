@@ -2,12 +2,12 @@ object frmMain: TfrmMain
   Left = 392
   Height = 560
   Top = 225
-  Width = 785
+  Width = 680
   Caption = 'Form2'
   ClientHeight = 560
-  ClientWidth = 785
+  ClientWidth = 680
   Constraints.MinHeight = 560
-  Constraints.MinWidth = 785
+  Constraints.MinWidth = 680
   DefaultMonitor = dmPrimary
   KeyPreview = True
   Menu = AppMainMenu
@@ -20,14 +20,14 @@ object frmMain: TfrmMain
     Left = 8
     Height = 23
     Top = 160
-    Width = 672
+    Width = 504
     Anchors = [akTop, akLeft, akRight]
     Enabled = False
     OnKeyPress = edtSendKeyPress
     TabOrder = 0
   end
   object btnSend: TButton
-    Left = 690
+    Left = 515
     Height = 23
     Top = 160
     Width = 75
@@ -41,14 +41,14 @@ object frmMain: TfrmMain
     Left = 0
     Height = 23
     Top = 537
-    Width = 785
+    Width = 680
     Panels = <>
   end
   object mmDisplay: TMemo
     Left = 0
     Height = 349
     Top = 188
-    Width = 785
+    Width = 680
     Align = alBottom
     Anchors = [akTop, akLeft, akRight, akBottom]
     Color = clBackground
@@ -64,10 +64,10 @@ object frmMain: TfrmMain
     TabOrder = 3
   end
   object cbxUSBaspDevice: TComboBox
-    Left = 600
+    Left = 516
     Height = 23
     Top = 24
-    Width = 136
+    Width = 132
     ItemHeight = 15
     ItemIndex = 0
     Items.Strings = (
@@ -79,7 +79,7 @@ object frmMain: TfrmMain
     Text = 'Select USBasp'
   end
   object lblUSBaspDevice: TLabel
-    Left = 600
+    Left = 516
     Height = 15
     Top = 8
     Width = 82
@@ -90,10 +90,10 @@ object frmMain: TfrmMain
     Left = 8
     Height = 144
     Top = 8
-    Width = 580
+    Width = 500
     Caption = 'UART'
     ClientHeight = 124
-    ClientWidth = 576
+    ClientWidth = 496
     TabOrder = 5
     object gbNoRuntimeSettings: TGroupBox
       Left = 88
@@ -308,9 +308,9 @@ object frmMain: TfrmMain
       Left = 368
       Height = 112
       Top = 0
-      Width = 200
+      Width = 120
       ClientHeight = 92
-      ClientWidth = 196
+      ClientWidth = 116
       Enabled = False
       TabOrder = 1
       object ckbAutoScroll: TCheckBox
@@ -331,15 +331,6 @@ object frmMain: TfrmMain
         Caption = 'TimeStamp'
         TabOrder = 1
       end
-      object btnClearMemo: TButton
-        Left = 112
-        Height = 23
-        Top = 56
-        Width = 75
-        Caption = 'Clear'
-        OnClick = btnClearMemoClick
-        TabOrder = 2
-      end
       object cbxWordWrap: TCheckBox
         Left = 16
         Height = 19
@@ -349,7 +340,7 @@ object frmMain: TfrmMain
         Checked = True
         OnChange = cbxWordWrapChange
         State = cbChecked
-        TabOrder = 3
+        TabOrder = 2
       end
     end
     object btnClose: TButton
@@ -372,26 +363,26 @@ object frmMain: TfrmMain
     end
   end
   object btnConnect: TButton
-    Left = 600
+    Left = 516
     Height = 31
-    Top = 56
+    Top = 52
     Width = 75
     Caption = 'Connect'
     OnClick = btnConnectClick
     TabOrder = 6
   end
   object btnDisconnect: TButton
-    Left = 690
+    Left = 596
     Height = 31
-    Top = 56
+    Top = 52
     Width = 75
     Caption = 'Disconnect'
     OnClick = btnDisconnectClick
     TabOrder = 7
   end
   object sbtnRefresh: TSpeedButton
-    Left = 742
-    Height = 22
+    Left = 648
+    Height = 23
     Top = 24
     Width = 23
     Glyph.Data = {
@@ -432,12 +423,15 @@ object frmMain: TfrmMain
     }
     OnClick = sbtnRefreshClick
   end
-  object Label1: TLabel
-    Left = 600
-    Height = 1
-    Top = 112
-    Width = 1
-    ParentColor = False
+  object btnClearMemo: TButton
+    Left = 596
+    Height = 23
+    Top = 160
+    Width = 75
+    Anchors = [akTop, akRight]
+    Caption = 'Clear'
+    OnClick = btnClearMemoClick
+    TabOrder = 8
   end
   object AppMainMenu: TMainMenu
     Left = 152
