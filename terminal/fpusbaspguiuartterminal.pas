@@ -32,7 +32,7 @@ interface
 
 uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, StdCtrls, Menus,
-  ComCtrls, ComboEx, ExtCtrls, MaskEdit, XMLPropStorage, Buttons, //usplashabout,
+  ComCtrls, ComboEx, ExtCtrls, MaskEdit, XMLPropStorage, Buttons,
   DateUtils, syncobjs, USBasp, SPSCRingBuffer;
 
 type
@@ -42,6 +42,12 @@ type
     BreakChar: char;
   end;
   PRawSerialDataMsg = ^TRawSerialDataMsg;
+
+  TRawMonitorDataMsg = record
+    ProgrammerState: string;
+    UARTState: string;
+  end;
+  PRawMonitorDataMsg = ^TRawMonitorDataMsg;
 
   { TThreadMonitor }
 
@@ -110,7 +116,6 @@ type
     mmDisplay: TMemo;
     miFile: TMenuItem;
     miExit: TMenuItem;
-    miAbout: TMenuItem;
     sbtnRefresh: TSpeedButton;
     AppStatusBar: TStatusBar;
     AppXMLPropStorage: TXMLPropStorage;
@@ -129,7 +134,6 @@ type
     procedure medtMemoBufferLinesChange(Sender: TObject);
     procedure mmDisplayChange(Sender: TObject);
     procedure miExitClick(Sender: TObject);
-    procedure miAboutClick(Sender: TObject);
     procedure sbtnRefreshClick(Sender: TObject);
   private
     FUSBasp: TFPUSBasp;
@@ -140,7 +144,6 @@ type
     FUARTLastState: string;
 
     FThreadUARTRead: TThreadUARTRead;
-    FSendSerialData: TBytes;
 
     FThreadMonitor: TThreadMonitor;
 
@@ -169,22 +172,25 @@ implementation
 
 procedure TThreadMonitor.DoMonitor;
 var
-  RawSerialDataMsg: PRawSerialDataMsg;
+  RawMonitorDataMsg: PRawMonitorDataMsg;
 begin
   if (frmMain.FUSBasp.Connected) and (not Application.Terminated) then
   begin
-    New(RawSerialDataMsg);
-    case FData[7] of
-      0: RawSerialDataMsg^.AsString := 'IDLE';
-      1: RawSerialDataMsg^.AsString := 'WRITEFLASH';
-      2: RawSerialDataMsg^.AsString := 'READFLASH';
-      3: RawSerialDataMsg^.AsString := 'READEEPROM';
-      4: RawSerialDataMsg^.AsString := 'WRITEEEPROM';
-      5: RawSerialDataMsg^.AsString := 'TPI_READ';
-      6: RawSerialDataMsg^.AsString := 'TPI_WRITE';
-      7: RawSerialDataMsg^.AsString := 'UART_COM';
+    New(RawMonitorDataMsg);
+    case (FData[7] and 7) of
+      0: RawMonitorDataMsg^.ProgrammerState := 'PRG IDLE';
+      1: RawMonitorDataMsg^.ProgrammerState := 'PRG WRITEFLASH';
+      2: RawMonitorDataMsg^.ProgrammerState := 'PRG READFLASH';
+      3: RawMonitorDataMsg^.ProgrammerState := 'PRG READEEPROM';
+      4: RawMonitorDataMsg^.ProgrammerState := 'PRG WRITEEEPROM';
+      5: RawMonitorDataMsg^.ProgrammerState := 'PRG TPI_READ';
+      6: RawMonitorDataMsg^.ProgrammerState := 'PRG TPI_WRITE';
     end;
-    Application.QueueAsyncCall(@frmMain.USBaspMonitor, PtrInt(RawSerialDataMsg));
+    if (FData[7] and 16) = 16 then
+      RawMonitorDataMsg^.UARTState := 'UART Enabled'
+    else
+      RawMonitorDataMsg^.UARTState := 'UART Disabled';
+    Application.QueueAsyncCall(@frmMain.USBaspMonitor, PtrInt(RawMonitorDataMsg));
   end;
 end;
 
@@ -326,7 +332,8 @@ begin
     2: edtSend.Text := edtSend.Text + #10;
     3: edtSend.Text := edtSend.Text + #13#10;
   end;
-  FUSBasp.TransmitBuffer.Write(TEncoding.ASCII.GetBytes(edtSend.Text)[0], Length(edtSend.Text));
+  FUSBasp.TransmitBuffer.Write(TEncoding.ASCII.GetBytes(edtSend.Text)[0],
+    Length(edtSend.Text));
   FUSBasp.TransmitEvent.SetEvent;
   edtSend.Text := '';
 end;
@@ -346,7 +353,6 @@ begin
     DefaultMonitor := dmActiveForm;
   end;
 
-  //USBaspUARTAbout.ShowSplash;
   ToggleGUI;
 
   FUARTWantedState := False;
@@ -397,11 +403,6 @@ begin
   Close;
 end;
 
-procedure TfrmMain.miAboutClick(Sender: TObject);
-begin
-  //USBaspUARTAbout.ShowAbout;
-end;
-
 procedure TfrmMain.sbtnRefreshClick(Sender: TObject);
 var
   i: byte;
@@ -429,11 +430,12 @@ end;
 
 procedure TfrmMain.USBaspMonitor(Data: PtrInt);
 var
-  RawSerialDataMsg: TRawSerialDataMsg;
+  RawMonitorDataMsg: TRawMonitorDataMsg;
 begin
-  RawSerialDataMsg := PRawSerialDataMsg(Data)^;
+
+  RawMonitorDataMsg := PRawMonitorDataMsg(Data)^;
   try
-    FUARTLastState := RawSerialDataMsg.AsString;
+    FUARTLastState := RawMonitorDataMsg.UARTState + ' | ' + RawMonitorDataMsg.ProgrammerState;
     //if FUARTWantedState then
     //begin
     //  if (MilliSecondsBetween(FUARTLastStateChange, Now) > 200) and
@@ -452,7 +454,7 @@ begin
     //  end;
     //end;
   finally
-    Dispose(PRawSerialDataMsg(Data));
+    Dispose(PRawMonitorDataMsg(Data));
   end;
   Label1.Caption := FUARTLastState;
 end;
@@ -486,7 +488,7 @@ begin
   begin
     /////// HACK TO SCROLL BOTTOM //////////
     mmDisplay.SelStart := Length(mmDisplay.Lines.Text);
-    mmDisplay.VertScrollBar.Position := 1000000;
+    mmDisplay.VertScrollBar.Position := mmDisplay.Lines.Count;
     /////// HACK TO SCROLL BOTTOM //////////
   end;
 end;

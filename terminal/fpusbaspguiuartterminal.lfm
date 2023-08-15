@@ -16,7 +16,6 @@ object frmMain: TfrmMain
   OnKeyPress = FormKeyPress
   Position = poScreenCenter
   SessionProperties = 'cbxBaudRate.ItemIndex;cbxLineBreak.ItemIndex;cbxWordWrap.Checked;ckbAutoScroll.Checked;ckbTimeStamp.Checked;Height;Left;medtMemoBufferLines.Text;Top;Width;cbxDataBits.ItemIndex;cbxParity.ItemIndex;cbxStopBits.ItemIndex'
-  LCLVersion = '2.2.6.0'
   object edtSend: TEdit
     Left = 8
     Height = 23
@@ -62,7 +61,6 @@ object frmMain: TfrmMain
     OnChange = mmDisplayChange
     ParentFont = False
     ReadOnly = True
-    ScrollBars = ssAutoBoth
     TabOrder = 3
   end
   object cbxUSBaspDevice: TComboBox
@@ -203,6 +201,7 @@ object frmMain: TfrmMain
         Top = 59
         Width = 62
         Alignment = taRightJustify
+        CharCase = ecNormal
         MaxLength = 3
         TabOrder = 2
         OnChange = medtMemoBufferLinesChange
@@ -435,11 +434,10 @@ object frmMain: TfrmMain
     OnClick = sbtnRefreshClick
   end
   object Label1: TLabel
-    Left = 664
-    Height = 15
+    Left = 600
+    Height = 1
     Top = 112
-    Width = 34
-    Caption = 'Label1'
+    Width = 1
     ParentColor = False
   end
   object AppMainMenu: TMainMenu
@@ -451,10 +449,6 @@ object frmMain: TfrmMain
         Caption = 'Exit'
         OnClick = miExitClick
       end
-    end
-    object miAbout: TMenuItem
-      Caption = 'About'
-      OnClick = miAboutClick
     end
   end
   object AppXMLPropStorage: TXMLPropStorage
