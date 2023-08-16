@@ -393,9 +393,9 @@ begin
   SplashAbout.DelaySeconds := 5;
   SplashAbout.Author := 'Dimitrios Chr. Ioannidis';
   SplashAbout.LicenseFile := saMIT;
-  SplashAbout.UserTitle := 'USBasp UART Terminal';
+  SplashAbout.UserTitle := 'USBasp HID UART Terminal';
   SplashAbout.Description :=
-    'An Object Pascal UART terminal for USBasp UART firmware .';
+    'For USBasp improved firmware version 1.11 and up.'#13#10'https://github.com/dioannidis/usbasp' ;
   SplashAbout.ShowDescription := True;
   SplashAbout.BackGroundColor := clDefault;
 
