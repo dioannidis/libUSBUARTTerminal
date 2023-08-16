@@ -118,6 +118,7 @@ type
     HasUart: boolean;
     HasHIDUart: boolean;
     HasTPI: boolean;
+    HasPDI: boolean;
     HasSNWrite: boolean;
     HasMonitorIntf: boolean;
     CrystalOsc: integer;

@@ -293,6 +293,7 @@ begin
       FUSBasp.USBaspDevice.MonitorInterface^.FirmwareVersion;
     lblOSC.Caption := 'OSC: ' + FUSBasp.USBaspDevice.CrystalOsc.ToString() + ' Hz';
     lblHasTPI.Caption := 'TPI: ' + BoolToStr(FUSBasp.USBaspDevice.HasTPI, 'On', 'Off');
+    lblHasPDI.Caption := 'PDI: ' + BoolToStr(FUSBasp.USBaspDevice.HasPDI, 'On', 'Off');
     lblHasSNWrite.Caption := 'SNW: ' + BoolToStr(FUSBasp.USBaspDevice.HasSNWrite,
       'On', 'Off');
   end;

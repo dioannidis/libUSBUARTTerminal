@@ -68,7 +68,8 @@ type
     FUARTTransmitThread: TThreadHID_UARTWrite;
     FMonitorReadThread: TThreadHID_Read;
     procedure SetUSBaspID(const AValue: byte);
-    function USBaspEnumerateHIDIntfs(var AUSBaspHIDDeviceList: TUSBaspHIDIntfList): integer;
+    function USBaspEnumerateHIDIntfs(var AUSBaspHIDDeviceList:
+      TUSBaspHIDIntfList): integer;
   public
     constructor Create;
     destructor Destroy; override;
@@ -265,8 +266,8 @@ begin
   end;
 end;
 
-function TFPUSBasp.USBaspEnumerateHIDIntfs(var AUSBaspHIDDeviceList:
-  TUSBaspHIDIntfList): integer;
+function TFPUSBasp.USBaspEnumerateHIDIntfs(
+  var AUSBaspHIDDeviceList: TUSBaspHIDIntfList): integer;
 var
   HidEnumerateList, HidItem: PHidDeviceInfo;
   USBaspHIDDevice: PUSBaspHIDIntf = nil;
@@ -333,6 +334,7 @@ begin
             USBaspFound := True;
             Break;
           end;
+
         if not USBaspFound then
         begin
           New(USBasp);
@@ -345,19 +347,34 @@ begin
 
           USBasp^.CrystalOsc := 12000000;
           USBasp^.HasUart := False;
+          USBasp^.HasHIDUart := False;
+          USBasp^.HasPDI := False;
+          USBasp^.HasTPI := False;
+          USBasp^.HasSNWrite := False;
+
+          if USBaspHIDIntf^.FirmwareVersion = '1.11' then
+          begin
+            USBasp^.HasPDI := False;
+            USBasp^.HasTPI := True;
+            USBasp^.HasSNWrite := True;
+          end;
 
           FUSBaspList.Add(USBasp);
         end;
+
         case USBaspHIDIntf^.InterfaceNumber of
-          1: begin
+          1:
+          begin
             USBasp^.UARTInterface := USBaspHIDIntf;
             USBasp^.HasHIDUart := True;
           end;
-          2: begin
+          2:
+          begin
             USBasp^.MonitorInterface := USBaspHIDIntf;
             USBasp^.HasMonitorIntf := True;
           end;
         end;
+
       end;
     end;
   end;
