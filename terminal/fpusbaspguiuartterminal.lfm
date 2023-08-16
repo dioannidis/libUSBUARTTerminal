@@ -42,7 +42,40 @@ object frmMain: TfrmMain
     Height = 23
     Top = 537
     Width = 680
-    Panels = <>
+    Panels = <    
+      item
+        Alignment = taCenter
+        Text = 'v00.88.00.1234'
+        Width = 90
+      end    
+      item
+        Text = 'USBasp monitor feedback'
+        Width = 143
+      end    
+      item
+        Text = 'UART'
+        Width = 38
+      end    
+      item
+        Style = psOwnerDraw
+        Text = 'Disabled'
+        Width = 55
+      end    
+      item
+        Text = 'Programming'
+        Width = 85
+      end    
+      item
+        Alignment = taCenter
+        Style = psOwnerDraw
+        Text = 'IDLE'
+        Width = 90
+      end    
+      item
+        Width = 50
+      end>
+    SimplePanel = False
+    OnDrawPanel = AppStatusBarDrawPanel
   end
   object mmDisplay: TMemo
     Left = 0
@@ -201,6 +234,7 @@ object frmMain: TfrmMain
         Top = 59
         Width = 62
         Alignment = taRightJustify
+        CharCase = ecNormal
         MaxLength = 3
         TabOrder = 2
         OnChange = medtMemoBufferLinesChange
@@ -365,7 +399,7 @@ object frmMain: TfrmMain
   object btnConnect: TButton
     Left = 516
     Height = 31
-    Top = 52
+    Top = 121
     Width = 75
     Caption = 'Connect'
     OnClick = btnConnectClick
@@ -374,7 +408,7 @@ object frmMain: TfrmMain
   object btnDisconnect: TButton
     Left = 596
     Height = 31
-    Top = 52
+    Top = 121
     Width = 75
     Caption = 'Disconnect'
     OnClick = btnDisconnectClick
@@ -432,6 +466,54 @@ object frmMain: TfrmMain
     Caption = 'Clear'
     OnClick = btnClearMemoClick
     TabOrder = 8
+  end
+  object lblManufacturer: TLabel
+    Left = 516
+    Height = 15
+    Top = 58
+    Width = 50
+    Caption = 'Manufac:'
+    ParentColor = False
+  end
+  object lblHasTPI: TLabel
+    Left = 516
+    Height = 15
+    Top = 93
+    Width = 39
+    Caption = 'TPI: Off'
+    ParentColor = False
+  end
+  object lblHasPDI: TLabel
+    Left = 566
+    Height = 15
+    Top = 93
+    Width = 41
+    Caption = 'PDI: Off'
+    ParentColor = False
+  end
+  object lblFWVersion: TLabel
+    Left = 516
+    Height = 15
+    Top = 76
+    Width = 43
+    Caption = 'FW: ----'
+    ParentColor = False
+  end
+  object lblHasSNWrite: TLabel
+    Left = 618
+    Height = 15
+    Top = 93
+    Width = 49
+    Caption = 'SNW: Off'
+    ParentColor = False
+  end
+  object lblOSC: TLabel
+    Left = 572
+    Height = 15
+    Top = 76
+    Width = 26
+    Caption = 'OSC:'
+    ParentColor = False
   end
   object AppMainMenu: TMainMenu
     Left = 152

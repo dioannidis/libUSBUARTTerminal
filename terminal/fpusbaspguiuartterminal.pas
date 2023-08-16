@@ -33,7 +33,7 @@ interface
 uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, StdCtrls, Menus,
   ComCtrls, ComboEx, ExtCtrls, MaskEdit, XMLPropStorage, Buttons,
-  DateUtils, syncobjs, uSplashAbout, USBasp, SPSCRingBuffer;
+  DateUtils, syncobjs, uSplashAbout, uversion, USBasp, SPSCRingBuffer;
 
 type
 
@@ -103,7 +103,13 @@ type
     gbNoRuntimeSettings: TGroupBox;
     gbRuntimeSettings: TGroupBox;
     gbUART: TGroupBox;
+    lblOSC: TLabel;
+    lblHasPDI: TLabel;
+    lblFWVersion: TLabel;
+    lblHasSNWrite: TLabel;
+    lblManufacturer: TLabel;
     lblBaud: TLabel;
+    lblHasTPI: TLabel;
     lblStopBits: TLabel;
     lblParity: TLabel;
     lblDataBits: TLabel;
@@ -120,6 +126,8 @@ type
     AppStatusBar: TStatusBar;
     AppXMLPropStorage: TXMLPropStorage;
     SplashAbout: TSplashAbout;
+    procedure AppStatusBarDrawPanel(StatusBar: TStatusBar; Panel: TStatusPanel;
+      const Rect: TRect);
     procedure btnClearMemoClick(Sender: TObject);
     procedure btnCloseClick(Sender: TObject);
     procedure btnConnectClick(Sender: TObject);
@@ -143,7 +151,6 @@ type
     FUARTWantedState: boolean;
 
     FUARTLastStateChange: TDateTime;
-    FUARTLastState: string;
 
     FThreadUARTRead: TThreadUARTRead;
 
@@ -180,20 +187,20 @@ begin
   begin
     New(RawMonitorDataMsg);
     case (FData[7] and 7) of
-      0: RawMonitorDataMsg^.ProgrammerState := 'PRG IDLE';
-      1: RawMonitorDataMsg^.ProgrammerState := 'PRG WRITEFLASH';
-      2: RawMonitorDataMsg^.ProgrammerState := 'PRG READFLASH';
-      3: RawMonitorDataMsg^.ProgrammerState := 'PRG READEEPROM';
-      4: RawMonitorDataMsg^.ProgrammerState := 'PRG WRITEEEPROM';
-      5: RawMonitorDataMsg^.ProgrammerState := 'PRG TPI_READ';
-      6: RawMonitorDataMsg^.ProgrammerState := 'PRG TPI_WRITE';
+      0: RawMonitorDataMsg^.ProgrammerState := 'IDLE';
+      1: RawMonitorDataMsg^.ProgrammerState := 'WRITE FLASH';
+      2: RawMonitorDataMsg^.ProgrammerState := 'READ FLASH';
+      3: RawMonitorDataMsg^.ProgrammerState := 'READ EEPROM';
+      4: RawMonitorDataMsg^.ProgrammerState := 'WRIT EEEPROM';
+      5: RawMonitorDataMsg^.ProgrammerState := 'TPI READ';
+      6: RawMonitorDataMsg^.ProgrammerState := 'TPI WRITE';
       else
-        RawMonitorDataMsg^.ProgrammerState := 'PRG UNKNOWN';
+        RawMonitorDataMsg^.ProgrammerState := 'UNKNOWN';
     end;
     if (FData[7] and 16) = 16 then
-      RawMonitorDataMsg^.UARTState := 'UART Enabled'
+      RawMonitorDataMsg^.UARTState := 'Enabled'
     else
-      RawMonitorDataMsg^.UARTState := 'UART Disabled';
+      RawMonitorDataMsg^.UARTState := 'Disabled';
     Application.QueueAsyncCall(@frmMain.USBaspMonitor, PtrInt(RawMonitorDataMsg));
   end;
 end;
@@ -281,18 +288,14 @@ begin
   if FUSBasp.USBaspDevices.Count > 0 then
   begin
     FUSBasp.USBaspID := cbxUSBaspDevice.ItemIndex;
-    //AppStatusBar.SimpleText :=
-    //  'Product: [' + FUSBasp.USBaspDevice.ProductName + '] Manufacturer: [' +
-    //  FUSBasp.USBaspDevice.Manufacturer + '] Serial number: [' +
-    //  FUSBasp.USBaspDevice.SerialNumber + '] Crystal: [' +
-    //  FUSBasp.USBaspDevice.CrystalOsc.ToString() + ' Hz] TPI: [' +
-    //  BoolToStr(FUSBasp.USBaspDevice.HasTPI, 'On', 'Off') + '] UART: [' +
-    //  BoolToStr(FUSBasp.USBaspDevice.HasUart, 'On', 'Off') + '] HID UART: [' +
-    //  BoolToStr(FUSBasp.USBaspDevice.HasHIDUart, 'On', 'Off') +
-    //  '] SN Write: [' + BoolToStr(FUSBasp.USBaspDevice.HasSNWrite, 'On', 'Off') + ']';
+    lblManufacturer.Caption := 'Manufac: ' + FUSBasp.USBaspDevice.Manufacturer;
+    lblFWVersion.Caption := 'FW: ' +
+      FUSBasp.USBaspDevice.MonitorInterface^.FirmwareVersion;
+    lblOSC.Caption := 'OSC: ' + FUSBasp.USBaspDevice.CrystalOsc.ToString() + ' Hz';
+    lblHasTPI.Caption := 'TPI: ' + BoolToStr(FUSBasp.USBaspDevice.HasTPI, 'On', 'Off');
+    lblHasSNWrite.Caption := 'SNW: ' + BoolToStr(FUSBasp.USBaspDevice.HasSNWrite,
+      'On', 'Off');
   end;
-  //else
-  //  AppStatusBar.SimpleText := 'No USBasp Device Found';
   ToggleGUI;
 end;
 
@@ -327,6 +330,34 @@ end;
 procedure TfrmMain.btnClearMemoClick(Sender: TObject);
 begin
   mmDisplay.Clear;
+end;
+
+procedure TfrmMain.AppStatusBarDrawPanel(StatusBar: TStatusBar;
+  Panel: TStatusPanel; const Rect: TRect);
+var
+  w, h, x, y: integer;
+begin
+  StatusBar.Canvas.Font.Color := clWhite;
+  case Panel.Text of
+    'Enabled': StatusBar.Canvas.Brush.Color := clGreen;
+    'IDLE': StatusBar.Canvas.Brush.Color := clGreen;
+    'Disabled': StatusBar.Canvas.Brush.Color := clRed;
+    else
+    begin
+      StatusBar.Canvas.Font.Color := clBlack;
+      StatusBar.Canvas.Brush.Color := clLime;
+    end;
+  end;
+  StatusBar.Canvas.FillRect(Rect);
+  w := StatusBar.Canvas.TextWidth(Panel.Text);
+  case Panel.Alignment of
+    taLeftJustify: x := Rect.Left + 2;
+    taRightJustify: x := Rect.Right - 2 - w;
+    taCenter: x := Rect.Left + (Rect.Width - w) div 2;
+  end;
+  h := StatusBar.Canvas.TextHeight(Panel.Text);
+  y := Rect.Top + (Rect.Height - h) div 2;
+  StatusBar.Canvas.TextOut(x, y, Panel.Text);
 end;
 
 procedure TfrmMain.btnSendClick(Sender: TObject);
@@ -368,6 +399,8 @@ begin
   SplashAbout.BackGroundColor := clDefault;
 
   SplashAbout.ShowSplash;
+
+  AppStatusBar.Panels[0].Text := 'v' + GetFileVersion;
 
   ToggleGUI;
 
@@ -454,35 +487,21 @@ procedure TfrmMain.USBaspMonitor(Data: PtrInt);
 var
   RawMonitorDataMsg: TRawMonitorDataMsg;
 begin
-
   RawMonitorDataMsg := PRawMonitorDataMsg(Data)^;
   try
-    FUARTLastState := RawMonitorDataMsg.UARTState + ' | ' +
-      RawMonitorDataMsg.ProgrammerState;
-    //if FUARTWantedState then
-    //begin
-    //  if (MilliSecondsBetween(FUARTLastStateChange, Now) > 200) and
-    //    (FUARTLastState = 'IDLE') then
-    //  begin
-    //    if not FUSBasp.UARTOpened then
-    //      FUSBasp.UARTOpen(TUARTBaudRate[cbxBaudRate.ItemIndex],
-    //        TUARTDataBits[cbxDataBits.ItemIndex],
-    //        TUARTParity[cbxParity.ItemIndex], TUARTStopBit[cbxStopBits.ItemIndex]);
-    //  end
-    //  else
-    //  if FUSBasp.UARTOpened then
-    //  begin
-    //    FUARTLastStateChange := Now;
-    //    FUSBasp.UARTClose;
-    //  end;
-    //end;
+    if FUSBasp.Connected then
+    begin
+      AppStatusBar.Panels[3].Text := RawMonitorDataMsg.UARTState;
+      AppStatusBar.Panels[5].Text := RawMonitorDataMsg.ProgrammerState;
+    end
+    else
+    begin
+      AppStatusBar.Panels[3].Text := 'Disabled';
+      AppStatusBar.Panels[5].Text := 'IDLE';
+    end;
   finally
     Dispose(PRawMonitorDataMsg(Data));
   end;
-  if FUSBasp.Connected then
-    AppStatusBar.SimpleText := FUARTLastState
-  else
-    AppStatusBar.SimpleText := '';
 end;
 
 procedure TfrmMain.ToggleGUI;
