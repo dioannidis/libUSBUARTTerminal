@@ -16,7 +16,7 @@
       <UseVersionInfo Value="True"/>
       <AutoIncrementBuild Value="True"/>
       <MinorVersionNr Value="8"/>
-      <BuildNr Value="80"/>
+      <BuildNr Value="81"/>
       <StringTable FileDescription="USBasp GUI HID UART Terminal" InternalName="prjFPUSBaspUARTTerminal" LegalCopyright="© 2022 - 2023 Dimitrios Chr. Ioannidis" LegalTrademarks="© 2022 - 2023 Dimitrios Chr. Ioannidis" OriginalFilename="prjFPUSBaspUARTTerminal.exe" ProductName="USBasp GUI HID UART Terminal" ProductVersion="0.5"/>
     </VersionInfo>
     <BuildModes Count="4">
