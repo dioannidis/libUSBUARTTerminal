@@ -319,6 +319,8 @@ var
   USBasp: PUSBasp;
   USBaspHIDIntf: PUSBaspHIDIntf;
   USBaspFound: boolean;
+  Buffer: array[0..8] of byte = (0, 0, 0, 0, 0, 0, 0, 0, 0);
+  tmpIntf: PUSBaspHIDIntf;
 begin
   Result := 0;
   if not FConnected then
@@ -337,37 +339,42 @@ begin
 
         if not USBaspFound then
         begin
+          New(tmpIntf);
+          try
+            tmpIntf^.Device := USBaspHIDIntf^.Device^.OpenPath(USBaspHIDIntf^.Path);
+            tmpIntf^.Device^.GetFeatureReport(Buffer, USBaspHIDIntf^.ReportSize + 1);
+            tmpIntf^.Device^.Close;
+          finally
+            Dispose(tmpIntf);
+          end;
+
           New(USBasp);
           USBasp^.ContainerID := USBaspHIDIntf^.ContainerID;
           USBasp^.Manufacturer := USBaspHIDIntf^.Manufacturer;
           USBasp^.ProductName := USBaspHIDIntf^.Product;
           USBasp^.SerialNumber := USBaspHIDIntf^.Serial;
           USBasp^.HasMonitorIntf := False;
-          USBasp^.HasHIDUart := False;
-
-          USBasp^.CrystalOsc := 12000000;
           USBasp^.HasUart := False;
-          USBasp^.HasHIDUart := False;
-          USBasp^.HasPDI := False;
-          USBasp^.HasTPI := False;
-          USBasp^.HasSNWrite := False;
 
-          if USBaspHIDIntf^.FirmwareVersion = '1.11' then
-          begin
-            USBasp^.HasPDI := False;
-            USBasp^.HasTPI := True;
-            USBasp^.HasSNWrite := True;
+          case Buffer[6] of
+            USBASP_CAP_12MHZ_CLOCK: USBasp^.CrystalOsc := 12000000;
+            USBASP_CAP_16MHZ_CLOCK: USBasp^.CrystalOsc := 16000000;
+            USBASP_CAP_18MHZ_CLOCK: USBasp^.CrystalOsc := 18000000;
+            USBASP_CAP_20MHZ_CLOCK: USBasp^.CrystalOsc := 20000000;
           end;
+
+          USBasp^.HasHIDUart :=
+            (Buffer[5] and USBASP_CAP_7_HID_UART) = USBASP_CAP_7_HID_UART;
+          USBasp^.HasPDI := (Buffer[5] and USBASP_CAP_PDI) = USBASP_CAP_PDI;
+          USBasp^.HasTPI := (Buffer[5] and USBASP_CAP_0_TPI) = USBASP_CAP_0_TPI;
+          USBasp^.HasSNWrite :=
+            (Buffer[5] and USBASP_CAP_2_SNHIDUPDATE) = USBASP_CAP_2_SNHIDUPDATE;
 
           FUSBaspList.Add(USBasp);
         end;
 
         case USBaspHIDIntf^.InterfaceNumber of
-          1:
-          begin
-            USBasp^.UARTInterface := USBaspHIDIntf;
-            USBasp^.HasHIDUart := True;
-          end;
+          1: USBasp^.UARTInterface := USBaspHIDIntf;
           2:
           begin
             USBasp^.MonitorInterface := USBaspHIDIntf;
