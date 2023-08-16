@@ -52,6 +52,18 @@ const
   USBASP_CAP_18MHZ_CLOCK = 2;
   USBASP_CAP_20MHZ_CLOCK = 3;
 
+  PROG_STATE_IDLE = 0;
+  PROG_STATE_WRITEFLASH = 1;
+  PROG_STATE_READFLASH = 2;
+  PROG_STATE_READEEPROM = 3;
+  PROG_STATE_WRITEEEPROM = 4;
+  PROG_STATE_TPI_READ = 5;
+  PROG_STATE_TPI_WRITE = 6;
+  PROG_STATE_SET_REPORT = 7;
+
+  UART_STATE_ENABLED = 16;
+  UART_STATE_DISABLED = 0;
+
   // USBasp UART Extension
   // https://github.com/dioannidis/usbasp/blob/master/firmware/usbasp.h
 

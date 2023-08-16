@@ -33,7 +33,8 @@ interface
 uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, StdCtrls, Menus,
   ComCtrls, ComboEx, ExtCtrls, MaskEdit, XMLPropStorage, Buttons,
-  DateUtils, syncobjs, uSplashAbout, uversion, USBasp, SPSCRingBuffer;
+  DateUtils, syncobjs, uSplashAbout, uversion, USBasp, USBasp_Definitions,
+  SPSCRingBuffer;
 
 type
 
@@ -187,17 +188,18 @@ begin
   begin
     New(RawMonitorDataMsg);
     case (FData[7] and 7) of
-      0: RawMonitorDataMsg^.ProgrammerState := 'IDLE';
-      1: RawMonitorDataMsg^.ProgrammerState := 'WRITE FLASH';
-      2: RawMonitorDataMsg^.ProgrammerState := 'READ FLASH';
-      3: RawMonitorDataMsg^.ProgrammerState := 'READ EEPROM';
-      4: RawMonitorDataMsg^.ProgrammerState := 'WRIT EEEPROM';
-      5: RawMonitorDataMsg^.ProgrammerState := 'TPI READ';
-      6: RawMonitorDataMsg^.ProgrammerState := 'TPI WRITE';
+      PROG_STATE_IDLE: RawMonitorDataMsg^.ProgrammerState := 'IDLE';
+      PROG_STATE_WRITEFLASH: RawMonitorDataMsg^.ProgrammerState := 'WRITE FLASH';
+      PROG_STATE_READFLASH: RawMonitorDataMsg^.ProgrammerState := 'READ FLASH';
+      PROG_STATE_READEEPROM: RawMonitorDataMsg^.ProgrammerState := 'READ EEPROM';
+      PROG_STATE_WRITEEEPROM: RawMonitorDataMsg^.ProgrammerState := 'WRIT EEEPROM';
+      PROG_STATE_TPI_READ: RawMonitorDataMsg^.ProgrammerState := 'TPI READ';
+      PROG_STATE_TPI_WRITE: RawMonitorDataMsg^.ProgrammerState := 'TPI WRITE';
+      PROG_STATE_SET_REPORT: RawMonitorDataMsg^.ProgrammerState := 'SET REPORT';
       else
         RawMonitorDataMsg^.ProgrammerState := 'UNKNOWN';
     end;
-    if (FData[7] and 16) = 16 then
+    if (FData[7] and UART_STATE_ENABLED) = UART_STATE_ENABLED then
       RawMonitorDataMsg^.UARTState := 'Enabled'
     else
       RawMonitorDataMsg^.UARTState := 'Disabled';
@@ -395,7 +397,7 @@ begin
   SplashAbout.LicenseFile := saMIT;
   SplashAbout.UserTitle := 'USBasp HID UART Terminal';
   SplashAbout.Description :=
-    'For USBasp improved firmware version 1.11 and up.'#13#10'https://github.com/dioannidis/usbasp' ;
+    'For USBasp improved firmware v1.11 and up.'#13#10'https://github.com/dioannidis/usbasp';
   SplashAbout.ShowDescription := True;
   SplashAbout.BackGroundColor := clDefault;
 
