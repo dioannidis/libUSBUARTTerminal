@@ -331,7 +331,20 @@ begin
       begin
         USBaspFound := False;
         for USBasp in FUSBaspList do
+{$ifdef MSWINDOWS}
           if IsEqualGUID(USBasp^.ContainerID, USBaspHIDIntf^.ContainerID) then
+{$endif}
+{$ifdef UNIX}
+  {$ifdef LINUX}
+          if USBasp^.Path = USBaspHIDIntf^.Path.Remove(USBaspHIDIntf^.Path.LastIndexOf(':')) then
+  {$endif}
+  {$ifdef BSD}
+    {$ifdef FREEBSD}
+    {$endif}
+    {$ifdef DARWIN}
+    {$endif}
+  {$endif}
+{$endif}
           begin
             USBaspFound := True;
             Break;
@@ -349,7 +362,20 @@ begin
           end;
 
           New(USBasp);
+{$ifdef MSWINDOWS}
           USBasp^.ContainerID := USBaspHIDIntf^.ContainerID;
+{$endif}
+{$ifdef UNIX}
+  {$ifdef LINUX}
+          USBasp^.Path := USBaspHIDIntf^.Path.Remove(USBaspHIDIntf^.Path.LastIndexOf(':'));
+  {$endif}
+  {$ifdef BSD}
+    {$ifdef FREEBSD}
+    {$endif}
+    {$ifdef DARWIN}
+    {$endif}
+  {$endif}
+{$endif}
           USBasp^.Manufacturer := USBaspHIDIntf^.Manufacturer;
           USBasp^.ProductName := USBaspHIDIntf^.Product;
           USBasp^.SerialNumber := USBaspHIDIntf^.Serial;

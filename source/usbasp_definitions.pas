@@ -31,7 +31,7 @@ unit USBasp_Definitions;
 interface
 
 uses
-  Classes, libusb, hidapi;
+  Classes, {libusb,} hidapi;
 
 const
   USBASP_SHARED_VID = $16C0;
@@ -120,11 +120,24 @@ type
   { TUSBasp }
 
   TUSBasp = record
-    Device: plibusb_device;
-    Handle: plibusb_device_handle;
+    Device: pointer; // plibusb_device;
+    Handle: pointer; // plibusb_device_handle;
     UARTInterface: PUSBaspHIDIntf;
     MonitorInterface: PUSBaspHIDIntf;
+{$ifdef MSWINDOWS}
     ContainerID: TGUID;
+{$endif}
+{$ifdef UNIX}
+  {$ifdef LINUX}
+    Path: String[255];
+  {$endif}
+  {$ifdef BSD}
+    {$ifdef FREEBSD}
+    {$endif}
+    {$ifdef DARWIN}
+    {$endif}
+  {$endif}
+{$endif}
     ProductName: string[255];
     Manufacturer: string[255];
     SerialNumber: string[255];
