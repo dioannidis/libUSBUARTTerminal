@@ -4,7 +4,7 @@ object frmMain: TfrmMain
   Top = 225
   Width = 680
   Caption = 'Form2'
-  ClientHeight = 540
+  ClientHeight = 560
   ClientWidth = 680
   Constraints.MinHeight = 560
   Constraints.MinWidth = 680
@@ -16,7 +16,6 @@ object frmMain: TfrmMain
   OnKeyPress = FormKeyPress
   Position = poScreenCenter
   SessionProperties = 'cbxBaudRate.ItemIndex;cbxLineBreak.ItemIndex;cbxWordWrap.Checked;ckbAutoScroll.Checked;ckbTimeStamp.Checked;Height;Left;medtMemoBufferLines.Text;Top;Width;cbxDataBits.ItemIndex;cbxParity.ItemIndex;cbxStopBits.ItemIndex'
-  LCLVersion = '2.0.10.0'
   object edtSend: TEdit
     Left = 8
     Height = 23
@@ -69,7 +68,7 @@ object frmMain: TfrmMain
       item
         Alignment = taCenter
         Style = psOwnerDraw
-        Text = 'IDLE'
+        Text = 'UNKNOWN'
         Width = 90
       end    
       item

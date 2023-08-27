@@ -345,6 +345,7 @@ begin
     'Enabled': StatusBar.Canvas.Brush.Color := clGreen;
     'IDLE': StatusBar.Canvas.Brush.Color := clGreen;
     'Disabled': StatusBar.Canvas.Brush.Color := clRed;
+    'UNKNOWN': StatusBar.Canvas.Brush.Color := clRed;
     else
     begin
       StatusBar.Canvas.Font.Color := clBlack;
@@ -500,7 +501,7 @@ begin
     else
     begin
       AppStatusBar.Panels[3].Text := 'Disabled';
-      AppStatusBar.Panels[5].Text := 'IDLE';
+      AppStatusBar.Panels[5].Text := 'UNKNOWN';
     end;
   finally
     Dispose(PRawMonitorDataMsg(Data));
