@@ -49,8 +49,9 @@ object frmMain: TfrmMain
         Width = 90
       end    
       item
-        Text = 'USBasp monitor feedback'
-        Width = 143
+        Alignment = taCenter
+        Text = 'HIDAPI'
+        Width = 100
       end    
       item
         Text = 'UART'
