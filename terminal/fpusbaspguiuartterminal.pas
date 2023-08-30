@@ -483,7 +483,6 @@ begin
   begin
     cbxUSBaspDevice.AddItem('No USBasp Device Found', nil);
     cbxUSBaspDevice.ItemIndex := 0;
-    AppStatusBar.SimpleText := 'No USBasp Device Found';
   end;
   cbxUSBaspDevice.Items.EndUpdate;
 end;
