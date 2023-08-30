@@ -16,7 +16,7 @@
       <UseVersionInfo Value="True"/>
       <AutoIncrementBuild Value="True"/>
       <MinorVersionNr Value="8"/>
-      <BuildNr Value="81"/>
+      <BuildNr Value="85"/>
       <StringTable FileDescription="USBasp GUI HID UART Terminal" InternalName="prjFPUSBaspUARTTerminal" LegalCopyright="© 2022 - 2023 Dimitrios Chr. Ioannidis" LegalTrademarks="© 2022 - 2023 Dimitrios Chr. Ioannidis" OriginalFilename="prjFPUSBaspUARTTerminal.exe" ProductName="USBasp GUI HID UART Terminal" ProductVersion="0.5"/>
     </VersionInfo>
     <BuildModes Count="4">
@@ -33,7 +33,9 @@
             <OtherUnitFiles Value="..\source;..\source\splashabout;..\source\poweredby"/>
             <UnitOutputDirectory Value="lib\$(TargetCPU)-$(TargetOS)\$(BuildMode)"/>
           </SearchPaths>
-          <Conditionals Value="if TargetOS = 'linux' then
+          <Conditionals Value="if (TargetOS = 'linux') or
+   (TargetOS = 'freebsd') or
+   (TargetOS = 'darwin') then
   CustomOptions := '-dUseCThreads';"/>
           <CodeGeneration>
             <SmartLinkUnit Value="True"/>
@@ -68,7 +70,9 @@
             <OtherUnitFiles Value="..\source;..\source\splashabout;..\source\poweredby"/>
             <UnitOutputDirectory Value="lib\$(TargetCPU)-$(TargetOS)\$(BuildMode)"/>
           </SearchPaths>
-          <Conditionals Value="if TargetOS = 'linux' then
+          <Conditionals Value="if (TargetOS = 'linux') or
+   (TargetOS = 'freebsd') or
+   (TargetOS = 'darwin') then
   CustomOptions := '-dUseCThreads';"/>
           <Parsing>
             <SyntaxOptions>
@@ -115,7 +119,9 @@
             <OtherUnitFiles Value="..\source;..\source\splashabout;..\source\poweredby"/>
             <UnitOutputDirectory Value="lib\$(TargetCPU)-$(TargetOS)\$(BuildMode)"/>
           </SearchPaths>
-          <Conditionals Value="if TargetOS = 'linux' then
+          <Conditionals Value="if (TargetOS = 'linux') or
+   (TargetOS = 'freebsd') or
+   (TargetOS = 'darwin') then
   CustomOptions := '-dUseCThreads';"/>
           <CodeGeneration>
             <SmartLinkUnit Value="True"/>
@@ -176,7 +182,9 @@
       <OtherUnitFiles Value="..\source;..\source\splashabout;..\source\poweredby"/>
       <UnitOutputDirectory Value="lib\$(TargetCPU)-$(TargetOS)\$(BuildMode)"/>
     </SearchPaths>
-    <Conditionals Value="if TargetOS = 'linux' then
+    <Conditionals Value="if (TargetOS = 'linux') or
+   (TargetOS = 'freebsd') or
+   (TargetOS = 'darwin') then
   CustomOptions := '-dUseCThreads';"/>
     <Parsing>
       <SyntaxOptions>
