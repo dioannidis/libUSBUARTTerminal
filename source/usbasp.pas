@@ -111,17 +111,17 @@ begin
   FUSBaspList := TUSBaspList.Create;
   FUSBaspHIDIntfList := TUSBaspHIDIntfList.Create;
 
-  FUARTReceiveBuffer := TSPSCRingBuffer.Create(65536);
-  FUARTTransmitBuffer := TSPSCRingBuffer.Create(65536);
-  FMonitorReadBuffer := TSPSCRingBuffer.Create(32);
+  FUARTReceiveBuffer := TSPSCRingBuffer.Create(128);
+  FUARTTransmitBuffer := TSPSCRingBuffer.Create(128);
+  FMonitorReadBuffer := TSPSCRingBuffer.Create(128);
 
   FUSBaspID := USBaspIDNotFound;
   FConnected := False;
   FUARTOpened := False;
 
-  FMonitorReadEvent := TEvent.Create(nil, True, False, 'MONRD');
-  FReceiveReadEvent := TEvent.Create(nil, True, False, 'RCDRD');
-  FTransmitWriteEvent := TEvent.Create(nil, True, False, 'TRNWR');
+  FMonitorReadEvent := TEvent.Create(nil, True, False, 'MONRD_' + IntToStr(Random(999)));
+  FReceiveReadEvent := TEvent.Create(nil, True, False, 'RCDRD_' + IntToStr(Random(999)));
+  FTransmitWriteEvent := TEvent.Create(nil, True, False, 'TRNWR_' + IntToStr(Random(999)));
 end;
 
 destructor TFPUSBasp.Destroy;
