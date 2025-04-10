@@ -151,9 +151,8 @@ begin
       if FBuffer.Write(USBAspHidPacket, SerialDataCount) <> SerialDataCount then
         raise TExceptionClass.Create('Buffer OverRun ');
       FThreadEvent.SetEvent;
-    end
-    else
-      FThreadEvent.ResetEvent;
+    end;
+    FThreadEvent.ResetEvent;
   until Terminated;
 end;
 
@@ -185,7 +184,6 @@ begin
         FUSBaspDevice^.Device^.Write(USBAspHidPacket, FUSBaspDevice^.ReportSize + 1);
       FBuffer.AdvanceReadIdx(DataCount);
     end;
-
   until Terminated;
 end;
 
