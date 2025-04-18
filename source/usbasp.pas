@@ -111,16 +111,16 @@ begin
   FUSBaspList := TUSBaspList.Create;
   FUSBaspHIDIntfList := TUSBaspHIDIntfList.Create;
 
-  FUARTReceiveBuffer := TSPSCRingBuffer.Create(128);
-  FUARTTransmitBuffer := TSPSCRingBuffer.Create(128);
-  FMonitorReadBuffer := TSPSCRingBuffer.Create(128);
+  FUARTReceiveBuffer := TSPSCRingBuffer.Create(256);
+  FUARTTransmitBuffer := TSPSCRingBuffer.Create(256);
+  FMonitorReadBuffer := TSPSCRingBuffer.Create(256);
 
   FUSBaspID := USBaspIDNotFound;
   FConnected := False;
   FUARTOpened := False;
 
-  FMonitorReadEvent := TEvent.Create(nil, True, False, 'MONRD_' + IntToStr(Random(999)));
-  FReceiveReadEvent := TEvent.Create(nil, True, False, 'RCDRD_' + IntToStr(Random(999)));
+  FMonitorReadEvent := TEvent.Create(nil, False, False, 'MONRD_' + IntToStr(Random(999)));
+  FReceiveReadEvent := TEvent.Create(nil, False, False, 'RCDRD_' + IntToStr(Random(999)));
   FTransmitWriteEvent := TEvent.Create(nil, True, False, 'TRNWR_' + IntToStr(Random(999)));
 end;
 
@@ -205,7 +205,6 @@ begin
     Buffer[1] := lo(Prescaler);
     Buffer[2] := hi(Prescaler);
     Buffer[3] := ADataBits or AStopBits or AParity;
-
 
     FUSBaspList[FUSBaspID]^.UARTInterface^.Device^.SendFeatureReport(Buffer,
       FUSBaspList[FUSBaspID]^.UARTInterface^.ReportSize + 1);

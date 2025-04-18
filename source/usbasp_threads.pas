@@ -105,7 +105,6 @@ begin
       FBuffer.Write(USBAspHidPacket, DataCount);
       FThreadEvent.SetEvent;
     end;
-    FThreadEvent.ResetEvent;
   until Terminated;
 end;
 
@@ -118,10 +117,9 @@ var
 begin
   repeat
     if FBuffer.Empty then
-    begin
       FThreadEvent.ResetEvent;
-      FThreadEvent.WaitFor(INFINITE);
-    end;
+    FThreadEvent.WaitFor(INFINITE);
+
     FillChar(USBAspHidPacket, 8, 0);
     DataCount := FBuffer.Peek(USBAspHidPacket[1], 8);
     if DataCount > 0 then
@@ -142,7 +140,7 @@ var
 begin
   repeat
     DataCount := FUSBaspDevice^.Device^.Read(USBAspHidPacket, FUSBaspDevice^.ReportSize);
-    if (USBAspHidPacket[7] > 0) then
+    if (DataCount > 0) and (USBAspHidPacket[7] > 0) then
     begin
       if (USBAspHidPacket[7] > 7) then
         SerialDataCount := 8
@@ -152,7 +150,6 @@ begin
         raise TExceptionClass.Create('Buffer OverRun ');
       FThreadEvent.SetEvent;
     end;
-    FThreadEvent.ResetEvent;
   until Terminated;
 end;
 
@@ -165,10 +162,8 @@ var
 begin
   repeat
     if FBuffer.Empty then
-    begin
       FThreadEvent.ResetEvent;
-      FThreadEvent.WaitFor(INFINITE);
-    end;
+    FThreadEvent.WaitFor(INFINITE);
 
     DataCount := FBuffer.Peek(USBAspHidPacket[1], 8);
     SerialCountOrDataByte := DataCount;
