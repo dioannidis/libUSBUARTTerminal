@@ -33,8 +33,8 @@ interface
 uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, StdCtrls, Menus,
   ComCtrls, ComboEx, ExtCtrls, MaskEdit, XMLPropStorage, Buttons,
-  DateUtils, syncobjs, uSplashAbout, uversion, hidapi, USBasp, USBasp_Definitions,
-  SPSCRingBuffer;
+  DateUtils, syncobjs, uSplashAbout, uversion, hidapi,
+  USBasp, USBasp_Definitions, SPSCRingBuffer;
 
 type
 
