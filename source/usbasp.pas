@@ -67,6 +67,7 @@ type
     FUARTReceiveThread: TThreadHID_UARTRead;
     FUARTTransmitThread: TThreadHID_UARTWrite;
     FMonitorReadThread: TThreadHID_Read;
+    FHidApiVersionString: string;
     procedure SetUSBaspID(const AValue: byte);
     function USBaspEnumerateHIDIntfs(var AUSBaspHIDDeviceList:
       TUSBaspHIDIntfList): integer;
@@ -97,6 +98,8 @@ type
     property USBaspID: byte read FUSBaspID write SetUSBaspID;
     property USBaspDevice: TUSBasp read FUSBaspDeviceSelected;
     property USBaspDevices: TUSBaspList read FUSBaspList;
+
+    property HidApiVersion: string read FHidApiVersionString;
   end;
 
 implementation
@@ -122,6 +125,8 @@ begin
   FMonitorReadEvent := TEvent.Create(nil, False, False, 'MONRD_' + IntToStr(Random(999)));
   FReceiveReadEvent := TEvent.Create(nil, False, False, 'RCDRD_' + IntToStr(Random(999)));
   FTransmitWriteEvent := TEvent.Create(nil, True, False, 'TRNWR_' + IntToStr(Random(999)));
+
+  FHidApiVersionString := HidApiVersionStr;
 end;
 
 destructor TFPUSBasp.Destroy;
