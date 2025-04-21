@@ -292,7 +292,7 @@ begin
     FUSBasp.USBaspID := cbxUSBaspDevice.ItemIndex;
     lblManufacturer.Caption := 'Manufac: ' + FUSBasp.USBaspDevice.Manufacturer;
     lblFWVersion.Caption := 'FW: ' +
-      FUSBasp.USBaspDevice.MonitorInterface^.FirmwareVersion;
+      FUSBasp.USBaspDevice.FirmwareVersion;
     lblOSC.Caption := 'OSC: ' + FUSBasp.USBaspDevice.CrystalOsc.ToString() + ' Hz';
     lblHasTPI.Caption := 'TPI: ' + BoolToStr(FUSBasp.USBaspDevice.HasTPI, 'On', 'Off');
     lblHasPDI.Caption := 'PDI: ' + BoolToStr(FUSBasp.USBaspDevice.HasPDI, 'On', 'Off');

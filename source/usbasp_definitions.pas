@@ -141,6 +141,7 @@ type
     ProductName: string[255];
     Manufacturer: string[255];
     SerialNumber: string[255];
+    FirmwareVersion: string;
     HasUart: boolean;
     HasHIDUart: boolean;
     HasTPI: boolean;
