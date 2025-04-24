@@ -34,8 +34,11 @@ uses
   cthreads,
 {$ENDIF}
 {$ENDIF}
+
+{$if FPC_FULLVERSION > 30004}
 {$if declared(UseHeapTrace)}
   SysUtils,
+{$endif}
 {$endif}
   Interfaces, // this includes the LCL widgetset
   Forms,
@@ -44,11 +47,13 @@ uses
 {$R *.res}
 
 begin
+{$if FPC_FULLVERSION > 30004}
 {$if declared(UseHeapTrace)}
   if FileExists('heap.trc') then
     DeleteFile('heap.trc');
   SetHeapTraceOutput('heap.trc');
 {$endIf}
+{$endif}
   RequireDerivedFormResource := True;
   Application.Title := 'USBasp HID UART Terminal';
   Application.Scaled := True;
