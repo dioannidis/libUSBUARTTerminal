@@ -55,7 +55,7 @@ begin
 {$endIf}
 {$endif}
   RequireDerivedFormResource := True;
-  Application.Title := 'USBasp HID UART Terminal';
+  Application.Title:='USBasp HID UART Terminal';
   Application.Scaled := True;
   Application.Initialize;
   Application.CreateForm(TfrmMain, frmMain);
