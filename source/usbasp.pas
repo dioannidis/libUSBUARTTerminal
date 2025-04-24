@@ -82,6 +82,7 @@ type
     function UARTClose: boolean;
 
     function EnumerateDevices: integer;
+    function ChangeSerialNumber(const ASerialNumber: string): integer;
 
     property Connected: boolean read FConnected;
     property UARTOpened: boolean read FUARTOpened;
@@ -329,6 +330,8 @@ begin
   Result := 0;
   if not FConnected then
   begin
+    FUSBaspList.FreeItems;
+    FUSBaspList.Clear;
     if USBaspEnumerateHIDIntfs(FUSBaspHIDIntfList) > 0 then
     begin
       for USBaspHIDIntf in FUSBaspHIDIntfList do
@@ -424,6 +427,31 @@ begin
   Result := FUSBaspList.Count;
   if Result = 0 then
     FUSBaspID := USBaspIDNotFound;
+end;
+
+function TFPUSBasp.ChangeSerialNumber(const ASerialNumber: string): integer;
+var
+  Buffer: array[0..8] of byte = (0, 0, 0, 0, 0, 0, 0, 0, 0);
+  HidSize: SizeInt;
+  ErrorCode: integer;
+  SerNumValue: Word;
+begin
+  Result := 0;
+  if FConnected and not FUARTOpened then
+  begin
+    Val(ASerialNumber, SerNumValue, ErrorCode);
+
+    // Add Report ID
+    Buffer[0] := $00;
+
+    Buffer[1] := lo(SerNumValue);
+    Buffer[2] := Hi(SerNumValue);
+    Buffer[4] := $01;
+
+    FUSBaspList[FUSBaspID]^.MonitorInterface^.Device^.SendFeatureReport(Buffer,
+      FUSBaspList[FUSBaspID]^.MonitorInterface^.ReportSize + 1);
+
+  end;
 end;
 
 initialization

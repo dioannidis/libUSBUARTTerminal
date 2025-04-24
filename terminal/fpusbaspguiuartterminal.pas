@@ -104,13 +104,15 @@ type
     gbNoRuntimeSettings: TGroupBox;
     gbRuntimeSettings: TGroupBox;
     gbUART: TGroupBox;
-    lblOSC: TLabel;
-    lblHasPDI: TLabel;
-    lblFWVersion: TLabel;
-    lblHasSNWrite: TLabel;
-    lblManufacturer: TLabel;
+    gbInfo: TGroupBox;
+    lblChangeSerial: TLabel;
     lblBaud: TLabel;
+    lblFWVersion: TLabel;
+    lblHasPDI: TLabel;
+    lblHasSNWrite: TLabel;
     lblHasTPI: TLabel;
+    lblManufacturer: TLabel;
+    lblOSC: TLabel;
     lblStopBits: TLabel;
     lblParity: TLabel;
     lblDataBits: TLabel;
@@ -118,6 +120,7 @@ type
     lblMemoBufferLines: TLabel;
     lblUSBaspDevice: TLabel;
     AppMainMenu: TMainMenu;
+    medtSerialNumber: TMaskEdit;
     medtMemoBufferLines: TMaskEdit;
     miAbout: TMenuItem;
     mmDisplay: TMemo;
@@ -126,6 +129,7 @@ type
     sbtnRefresh: TSpeedButton;
     AppStatusBar: TStatusBar;
     AppXMLPropStorage: TXMLPropStorage;
+    sbtnChangeSerial: TSpeedButton;
     SplashAbout: TSplashAbout;
     procedure AppStatusBarDrawPanel(StatusBar: TStatusBar; Panel: TStatusPanel;
       const Rect: TRect);
@@ -145,6 +149,7 @@ type
     procedure miAboutClick(Sender: TObject);
     procedure mmDisplayChange(Sender: TObject);
     procedure miExitClick(Sender: TObject);
+    procedure sbtnChangeSerialClick(Sender: TObject);
     procedure sbtnRefreshClick(Sender: TObject);
   private
     FUSBasp: TFPUSBasp;
@@ -276,11 +281,13 @@ end;
 procedure TfrmMain.btnConnectClick(Sender: TObject);
 begin
   FUSBasp.Connect(cbxUSBaspDevice.ItemIndex);
+  medtSerialNumber.Text := FUSBasp.USBaspDevice.SerialNumber;
   ToggleGUI;
 end;
 
 procedure TfrmMain.btnDisconnectClick(Sender: TObject);
 begin
+  medtSerialNumber.Text := '0000';
   FUSBasp.Disconnect;
   ToggleGUI;
 end;
@@ -290,7 +297,7 @@ begin
   if FUSBasp.USBaspDevices.Count > 0 then
   begin
     FUSBasp.USBaspID := cbxUSBaspDevice.ItemIndex;
-    lblManufacturer.Caption := 'Manufac: ' + FUSBasp.USBaspDevice.Manufacturer;
+    lblManufacturer.Caption := 'Manufacturer: ' + FUSBasp.USBaspDevice.Manufacturer;
     lblFWVersion.Caption := 'FW: ' +
       FUSBasp.USBaspDevice.FirmwareVersion;
     lblOSC.Caption := 'OSC: ' + FUSBasp.USBaspDevice.CrystalOsc.ToString() + ' Hz';
@@ -463,6 +470,16 @@ begin
   Close;
 end;
 
+procedure TfrmMain.sbtnChangeSerialClick(Sender: TObject);
+begin
+  if medtSerialNumber.Text <> FUSBasp.USBaspDevice.SerialNumber then
+  begin
+    FUSBasp.ChangeSerialNumber(medtSerialNumber.Text);
+    btnDisconnectClick(Self);
+    sbtnRefreshClick(Self);
+  end;
+end;
+
 procedure TfrmMain.sbtnRefreshClick(Sender: TObject);
 var
   i: byte;
@@ -510,6 +527,9 @@ end;
 
 procedure TfrmMain.ToggleGUI;
 begin
+  medtSerialNumber.Enabled := FUSBasp.Connected and not FUSBasp.UARTOpened and FUSBasp.USBaspDevice.HasSNWrite;
+  sbtnChangeSerial.Enabled := medtSerialNumber.Enabled;
+  lblChangeSerial.Enabled := sbtnChangeSerial.Enabled;
   cbxUSBaspDevice.Enabled := not FUSBasp.Connected;
   sbtnRefresh.Enabled := cbxUSBaspDevice.Enabled;
   btnConnect.Enabled := (FUSBasp.USBaspID <> USBaspIDNotFound) and not FUSBasp.Connected;

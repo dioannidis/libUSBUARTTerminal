@@ -19,8 +19,8 @@ object frmMain: TfrmMain
   object edtSend: TEdit
     Left = 8
     Height = 23
-    Top = 160
-    Width = 504
+    Top = 190
+    Width = 500
     Anchors = [akTop, akLeft, akRight]
     Enabled = False
     OnKeyPress = edtSendKeyPress
@@ -29,7 +29,7 @@ object frmMain: TfrmMain
   object btnSend: TButton
     Left = 515
     Height = 23
-    Top = 160
+    Top = 190
     Width = 75
     Anchors = [akTop, akRight]
     Caption = 'Send'
@@ -51,7 +51,7 @@ object frmMain: TfrmMain
       item
         Alignment = taCenter
         Text = 'HIDAPI'
-        Width = 100
+        Width = 130
       end    
       item
         Text = 'UART'
@@ -80,8 +80,8 @@ object frmMain: TfrmMain
   end
   object mmDisplay: TMemo
     Left = 0
-    Height = 349
-    Top = 188
+    Height = 313
+    Top = 224
     Width = 680
     Align = alBottom
     Anchors = [akTop, akLeft, akRight, akBottom]
@@ -122,11 +122,11 @@ object frmMain: TfrmMain
   end
   object gbUART: TGroupBox
     Left = 8
-    Height = 144
-    Top = 8
+    Height = 136
+    Top = 47
     Width = 500
     Caption = 'UART'
-    ClientHeight = 124
+    ClientHeight = 116
     ClientWidth = 496
     TabOrder = 5
     object gbNoRuntimeSettings: TGroupBox
@@ -400,7 +400,7 @@ object frmMain: TfrmMain
   object btnConnect: TButton
     Left = 516
     Height = 31
-    Top = 121
+    Top = 56
     Width = 75
     Caption = 'Connect'
     OnClick = btnConnectClick
@@ -409,7 +409,7 @@ object frmMain: TfrmMain
   object btnDisconnect: TButton
     Left = 596
     Height = 31
-    Top = 121
+    Top = 56
     Width = 75
     Caption = 'Disconnect'
     OnClick = btnDisconnectClick
@@ -461,64 +461,138 @@ object frmMain: TfrmMain
   object btnClearMemo: TButton
     Left = 596
     Height = 23
-    Top = 160
+    Top = 190
     Width = 75
     Anchors = [akTop, akRight]
     Caption = 'Clear'
     OnClick = btnClearMemoClick
     TabOrder = 8
   end
-  object lblManufacturer: TLabel
+  object gbInfo: TGroupBox
+    Left = 8
+    Height = 40
+    Top = 7
+    Width = 500
+    Caption = 'Info'
+    ClientHeight = 20
+    ClientWidth = 496
+    TabOrder = 9
+    object lblManufacturer: TLabel
+      Left = 8
+      Height = 15
+      Top = 0
+      Width = 78
+      Caption = 'Manufacturer :'
+      ParentColor = False
+    end
+    object lblHasTPI: TLabel
+      Left = 176
+      Height = 15
+      Top = 0
+      Width = 39
+      Caption = 'TPI: Off'
+      ParentColor = False
+    end
+    object lblHasPDI: TLabel
+      Left = 224
+      Height = 15
+      Top = 0
+      Width = 41
+      Caption = 'PDI: Off'
+      ParentColor = False
+    end
+    object lblHasSNWrite: TLabel
+      Left = 272
+      Height = 15
+      Top = 0
+      Width = 49
+      Caption = 'SNW: Off'
+      ParentColor = False
+    end
+    object lblOSC: TLabel
+      Left = 392
+      Height = 15
+      Top = 0
+      Width = 26
+      Caption = 'OSC:'
+      ParentColor = False
+    end
+    object lblFWVersion: TLabel
+      Left = 336
+      Height = 15
+      Top = 0
+      Width = 43
+      Caption = 'FW: ----'
+      ParentColor = False
+    end
+  end
+  object medtSerialNumber: TMaskEdit
+    Left = 516
+    Height = 23
+    Top = 117
+    Width = 132
+    Alignment = taCenter
+    CharCase = ecNormal
+    MaxLength = 4
+    TabOrder = 10
+    EditMask = '9990;0;_'
+    Text = '0000'
+    SpaceChar = '_'
+  end
+  object sbtnChangeSerial: TSpeedButton
+    Left = 648
+    Height = 23
+    Top = 117
+    Width = 24
+    Glyph.Data = {
+      36040000424D3604000000000000360000002800000010000000100000000100
+      2000000000000004000064000000640000000000000000000000000000000000
+      000000000000000000000696F2DC0696F2500000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      00000000000000000000069AF3A90694F2FF0697F18400000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      000000000000000000000595F1350697F3FB05A2F4F50699F29E0080FF040000
+      0000000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000069BF3D802DBFBFF04B1F6F5059AF3C40099
+      EE0F000000000000000000000000000000000000000000000000000000000000
+      00000000000000000000000000000595F26004B0F6F200FEFFFF03BFF8F70699
+      F2DE0991EE1E0000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000008EFF090698F2F301F1FDFF00FFFFFF03CF
+      F9FC0598F2EE0593F034000000000000000000000000000000000594F2620694
+      F2FF0694F2FF0694F2FF0694F2FF0694F2FF0694F2FF02D4FAFF00FFFFFF00FF
+      FFFF02DEFBFE0599F2F40696F2500000000000000000000000000080FF06059A
+      F3C204BDF7F600FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FF
+      FFFF00FFFFFF01EBFDFF059DF4F50697F1840000000000000000000000000099
+      E60A069AF3D203C7F8F900FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FF
+      FFFF00FFFFFF00FFFFFF01F4FEFF05A5F5F40699F2A20099FF05000000000000
+      00000099F2140699F3E203CFF9FC00FFFFFF00FFFFFF00FFFFFF05A0F4FB0694
+      F2FF0694F2FF0694F2FF0694F2FF0694F2FF0694F2FF0594F262000000000000
+      0000000000000992F61C0598F3E902D7FAFD00FFFFFF00FFFFFF01E5FCFF0599
+      F2F40893F3420000000000000000000000000000000000000000000000000000
+      000000000000000000000791F1250599F2EF02E0FBFF00FFFFFF00FFFFFF01E5
+      FCFF0599F2F40893F34200000000000000000000000000000000000000000000
+      00000000000000000000000000000595F1350699F2F401E5FCFF00FFFFFF00FF
+      FFFF01E5FCFF0599F2F40893F342000000000000000000000000000000000000
+      0000000000000000000000000000000000000893F3420599F3F501EBFDFF00FF
+      FFFF00FFFFFF01E5FCFF0599F2F40893F3420000000000000000000000000000
+      000000000000000000000000000000000000000000000695F3570695F2FE0694
+      F2FF0694F2FF0694F2FF0694F2FF0695F2E50000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000
+    }
+    OnClick = sbtnChangeSerialClick
+  end
+  object lblChangeSerial: TLabel
     Left = 516
     Height = 15
-    Top = 58
-    Width = 50
-    Caption = 'Manufac:'
-    ParentColor = False
-  end
-  object lblHasTPI: TLabel
-    Left = 516
-    Height = 15
-    Top = 93
-    Width = 39
-    Caption = 'TPI: Off'
-    ParentColor = False
-  end
-  object lblHasPDI: TLabel
-    Left = 566
-    Height = 15
-    Top = 93
-    Width = 41
-    Caption = 'PDI: Off'
-    ParentColor = False
-  end
-  object lblFWVersion: TLabel
-    Left = 516
-    Height = 15
-    Top = 76
-    Width = 43
-    Caption = 'FW: ----'
-    ParentColor = False
-  end
-  object lblHasSNWrite: TLabel
-    Left = 618
-    Height = 15
-    Top = 93
-    Width = 49
-    Caption = 'SNW: Off'
-    ParentColor = False
-  end
-  object lblOSC: TLabel
-    Left = 572
-    Height = 15
-    Top = 76
-    Width = 26
-    Caption = 'OSC:'
+    Top = 101
+    Width = 114
+    Caption = 'Change USBasp Serial'
     ParentColor = False
   end
   object AppMainMenu: TMainMenu
-    Left = 152
-    Top = 208
+    left = 192
+    top = 272
     object miFile: TMenuItem
       Caption = 'File'
       object miExit: TMenuItem
@@ -533,7 +607,7 @@ object frmMain: TfrmMain
   end
   object AppXMLPropStorage: TXMLPropStorage
     StoredValues = <>
-    Left = 264
-    Top = 210
+    left = 336
+    top = 272
   end
 end
