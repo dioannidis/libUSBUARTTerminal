@@ -133,6 +133,7 @@ type
   {$endif}
   {$ifdef BSD}
     {$ifdef FREEBSD}
+    Path: String[255];
     {$endif}
     {$ifdef DARWIN}
     {$endif}

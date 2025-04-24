@@ -344,6 +344,7 @@ begin
   {$endif}
   {$ifdef BSD}
     {$ifdef FREEBSD}
+          if USBasp^.Path = USBaspHIDIntf^.Path.Remove(USBaspHIDIntf^.Path.LastIndexOf('.')) then
     {$endif}
     {$ifdef DARWIN}
     {$endif}
@@ -375,6 +376,7 @@ begin
   {$endif}
   {$ifdef BSD}
     {$ifdef FREEBSD}
+          USBasp^.Path := USBaspHIDIntf^.Path.Remove(USBaspHIDIntf^.Path.LastIndexOf('.'));
     {$endif}
     {$ifdef DARWIN}
     {$endif}

@@ -557,10 +557,6 @@ begin
     if (mmDisplay <> nil) and (not Application.Terminated) and
       (RawSerialDataMsg.AsString.Length > 0) then
     begin
-{$ifdef LCLQT5}
-      if mmDisplay.Lines.Count = 0 then
-        mmDisplay.Lines.Add(' ');
-{$endif}
       LastLine := mmDisplay.Lines.Count - 1;
       mmDisplay.Lines.BeginUpdate;
       mmDisplay.Lines[LastLine] :=
@@ -583,10 +579,6 @@ begin
     if (mmDisplay <> nil) and (not Application.Terminated) and
       (RawSerialDataMsg.AsString.Length > 0) then
     begin
-{$ifdef LCLQT5}
-      if mmDisplay.Lines.Count = 0 then
-        mmDisplay.Lines.Add(' ');
-{$endif}
       LastLine := mmDisplay.Lines.Count - 1;
       i := 1;
       j := i;
@@ -629,10 +621,6 @@ begin
     if (mmDisplay <> nil) and (not Application.Terminated) and
       (RawSerialDataMsg.AsString.Length > 0) then
     begin
-{$ifdef LCLQT5}
-      if mmDisplay.Lines.Count = 0 then
-        mmDisplay.Lines.Add(' ');
-{$endif}
       LastLine := mmDisplay.Lines.Count - 1;
       i := 1;
       j := i;
